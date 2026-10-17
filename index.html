@@ -60,7 +60,7 @@
         .house-container {
             position: relative;
             width: 85%;
-            max-width: 420px;
+            max-width: 440px;
             cursor: pointer;
             transition: transform 0.2s ease;
         }
@@ -78,39 +78,45 @@
         .roof { fill: #334155; transition: 0.4s ease; }
         .glow-effect { opacity: 0; transition: 0.4s ease; }
 
-        /* ON State (Warm Glowing House) */
+        /* --- Default State: House OFF (Dog Sleeps, Butterfly Hidden) --- */
+        .sleeping-dog { display: block; }
+        .awake-dog { display: none; }
+        .sleep-z { animation: floatZ 2s infinite ease-in-out; }
+        @keyframes floatZ {
+            0% { transform: translateY(0px) scale(0.8); opacity: 0.3; }
+            50% { transform: translateY(-10px) scale(1.1); opacity: 1; }
+            100% { transform: translateY(-20px) scale(0.9); opacity: 0; }
+        }
+        .butterfly { opacity: 0; transition: opacity 0.3s ease; }
+
+        /* --- Active State: House ON (Dog Wakes Up & Plays with Butterfly) --- */
         .house-on .window-pane { fill: #fde047; filter: drop-shadow(0 0 12px #facc15); }
         .house-on .house-body { fill: #fffbeb; }
         .house-on .roof { fill: #475569; }
         .house-on .glow-effect { opacity: 1; }
 
-        /* --- Dog Tail Wag & Butterfly Flight Animation --- */
+        .house-on .sleeping-dog { display: none; }
+        .house-on .awake-dog { display: block; }
+
+        /* Dog tail wagging */
         .dog-tail {
-            transform-origin: 300px 270px;
-            transition: 0.3s ease;
-        }
-        .house-on .dog-tail {
-            animation: dogTailWag 0.5s infinite alternate ease-in-out;
+            transform-origin: 310px 270px;
+            animation: dogTailWag 0.4s infinite alternate ease-in-out;
         }
         @keyframes dogTailWag {
             0% { transform: rotate(0deg); }
-            100% { transform: rotate(25deg); }
+            100% { transform: rotate(30deg); }
         }
 
-        /* Butterfly flying around when ON */
-        .butterfly {
-            opacity: 0;
-            transform: translate(0, 0);
-            transition: opacity 0.5s ease;
-        }
+        /* Butterfly flying and fluttering around the dog */
         .house-on .butterfly {
             opacity: 1;
-            animation: flyAround 3s infinite ease-in-out;
+            animation: flyButterfly 3.5s infinite ease-in-out;
         }
-        @keyframes flyAround {
+        @keyframes flyButterfly {
             0% { transform: translate(0px, 0px) scale(1); }
-            25% { transform: translate(15px, -20px) scale(1.1); }
-            50% { transform: translate(35px, -5px) scale(0.9); }
+            25% { transform: translate(25px, -25px) scale(1.1); }
+            50% { transform: translate(45px, -10px) scale(0.95); }
             75% { transform: translate(20px, 10px) scale(1.05); }
             100% { transform: translate(0px, 0px) scale(1); }
         }
@@ -123,7 +129,6 @@
             border-radius: 20px; backdrop-filter: blur(4px);
         }
 
-        /* Responsive adjustments for phones in portrait mode */
         @media (max-width: 600px) {
             .side-card { top: auto; bottom: 75px; transform: none; padding: 8px 12px; }
             .left-card { left: 15px; }
@@ -154,9 +159,9 @@
         <div class="card-value" id="weatherDisplay">--°C</div>
     </div>
 
-    <!-- Center Interactive Cartoon House with Puppy & Butterfly -->
+    <!-- Center Interactive Cartoon House -->
     <div class="house-container" id="houseCard" onclick="toggleLight()">
-        <svg id="houseSvg" viewBox="0 0 440 350" xmlns="http://www.w3.org/2000/svg">
+        <svg id="houseSvg" viewBox="0 0 450 350" xmlns="http://www.w3.org/2000/svg">
             <circle class="glow-effect" cx="190" cy="180" r="140" fill="#fef08a" opacity="0.4" filter="blur(30px)"/>
             
             <!-- House Structure -->
@@ -177,42 +182,59 @@
             <rect class="window-pane" x="251" y="176" width="16" height="16" rx="2"/>
             <rect x="260" y="70" width="25" height="45" rx="3" fill="#94a3b8"/>
 
-            <!-- CARTOON PUPPY (Sitting on the right, matching your uploaded reference style) -->
-            <g class="cartoon-dog">
-                <!-- Tail -->
-                <path class="dog-tail" d="M 300 275 Q 315 260 310 245" stroke="#f59e0b" stroke-width="6" stroke-linecap="round" fill="none"/>
-                <!-- Body -->
-                <ellipse cx="290" cy="270" rx="15" ry="22" fill="#f59e0b"/>
-                <path d="M 280 260 Q 290 285 300 260" fill="#fffbeb"/>
-                <!-- Collar -->
-                <path d="M 278 245 Q 290 250 302 245" stroke="#451a03" stroke-width="4" fill="none"/>
-                <!-- Head -->
-                <circle cx="290" cy="232" r="16" fill="#f59e0b"/>
-                <!-- Cute White Patch on Head -->
-                <path d="M 290 216 Q 295 225 290 232 Q 285 225 290 216" fill="#fffbeb"/>
-                <!-- Floppy Ears -->
-                <ellipse cx="272" cy="235" rx="7" ry="12" fill="#d97706" transform="rotate(-15 272 235)"/>
-                <ellipse cx="308" cy="235" rx="7" ry="12" fill="#d97706" transform="rotate(15 308 235)"/>
-                <!-- Eyes -->
-                <circle cx="284" cy="230" r="3.5" fill="#1e293b"/>
-                <circle cx="283" cy="229" r="1.2" fill="#fff"/>
-                <circle cx="296" cy="230" r="3.5" fill="#1e293b"/>
-                <circle cx="295" cy="229" r="1.2" fill="#fff"/>
-                <!-- Nose & Happy Mouth -->
-                <ellipse cx="290" cy="237" rx="3" ry="2" fill="#1e293b"/>
-                <path d="M 287 240 Q 290 244 293 240" stroke="#1e293b" stroke-width="1.5" fill="none"/>
+            <!-- ================= SLEEPING TRICOLOR PUPPY (House OFF) ================= -->
+            <g class="sleeping-dog">
+                <!-- White & Brown Curled Body -->
+                <ellipse cx="295" cy="280" rx="24" ry="16" fill="#ffffff"/>
+                <ellipse cx="302" cy="275" rx="14" ry="10" fill="#b45309"/> <!-- Dark brown back patch -->
+                <!-- Head resting -->
+                <circle cx="272" cy="275" r="13" fill="#ffffff"/>
+                <circle cx="268" cy="271" r="9" fill="#d97706"/> <!-- Brown eye patch -->
+                <!-- Floppy Brown Ear -->
+                <ellipse cx="265" cy="282" rx="5" ry="9" fill="#92400e" transform="rotate(30 265 282)"/>
+                <!-- Closed Eyes (Sleeping) -->
+                <path d="M 268 273 Q 272 277 276 273" stroke="#451a03" stroke-width="1.5" fill="none"/>
+                <!-- Sleeping Z's -->
+                <text x="260" y="250" fill="#ffffff" font-size="14" font-weight="bold" class="sleep-z">Z</text>
+                <text x="272" y="238" fill="#ffffff" font-size="12" font-weight="bold" class="sleep-z" style="animation-delay: 0.7s;">z</text>
             </g>
 
-            <!-- BUTTERFLY (Playing with the puppy when house is ON) -->
+            <!-- ================= AWAKE TRICOLOR PUPPY (House ON) ================= -->
+            <g class="awake-dog">
+                <!-- Tail Wagging (Brown tipped) -->
+                <path class="dog-tail" d="M 310 275 Q 325 260 320 245" stroke="#78350f" stroke-width="6" stroke-linecap="round" fill="none"/>
+                <!-- White Chest/Body with Dark Saddle Patch -->
+                <ellipse cx="295" cy="270" rx="16" ry="22" fill="#ffffff"/>
+                <path d="M 292 252 Q 312 265 305 285 Q 295 280 292 252" fill="#78350f"/> <!-- Back patch -->
+                
+                <!-- Head with Brown Patches and White Center Stripe (Matches your image!) -->
+                <circle cx="295" cy="232" r="16" fill="#ffffff"/>
+                <path d="M 279 230 Q 285 218 290 220 Q 288 238 279 230" fill="#b45309"/> <!-- Left brown eye patch -->
+                <path d="M 311 230 Q 305 218 300 220 Q 302 238 311 230" fill="#b45309"/> <!-- Right brown eye patch -->
+                
+                <!-- Floppy Brown Ears -->
+                <ellipse cx="276" cy="235" rx="7" ry="13" fill="#92400e" transform="rotate(-20 276 235)"/>
+                <ellipse cx="314" cy="235" rx="7" ry="13" fill="#92400e" transform="rotate(20 314 235)"/>
+                
+                <!-- Big Warm Eyes -->
+                <circle cx="288" cy="230" r="3.5" fill="#451a03"/>
+                <circle cx="287" cy="229" r="1.2" fill="#fff"/>
+                <circle cx="302" cy="230" r="3.5" fill="#451a03"/>
+                <circle cx="301" cy="229" r="1.2" fill="#fff"/>
+                
+                <!-- Nose & Happy Open Mouth -->
+                <ellipse cx="295" cy="236" rx="3.5" ry="2.2" fill="#1e293b"/>
+                <path d="M 291 240 Q 295 246 299 240" fill="#f43f5e"/>
+            </g>
+
+            <!-- ================= BUTTERFLY (Flutters when ON) ================= -->
             <g class="butterfly">
-                <!-- Wings -->
-                <ellipse cx="325" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(-30 325 205)"/>
-                <ellipse cx="337" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(30 337 205)"/>
-                <ellipse cx="326" cy="213" rx="5" ry="3" fill="#f43f5e" transform="rotate(20 326 213)"/>
-                <ellipse cx="336" cy="213" rx="5" ry="3" fill="#f43f5e" transform="rotate(-20 336 213)"/>
-                <!-- Body -->
-                <line x1="331" y1="202" x2="331" y2="214" stroke="#1e293b" stroke-width="2"/>
-                <circle cx="331" cy="201" r="1.5" fill="#1e293b"/>
+                <ellipse cx="330" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(-30 330 205)"/>
+                <ellipse cx="342" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(30 342 205)"/>
+                <ellipse cx="331" cy="213" rx="5" ry="3" fill="#f43f5e" transform="rotate(20 331 213)"/>
+                <ellipse cx="341" cy="213" rx="5" ry="3" fill="#f43f5e" transform="rotate(-20 341 213)"/>
+                <line x1="336" y1="202" x2="336" y2="214" stroke="#1e293b" stroke-width="2"/>
+                <circle cx="336" cy="201" r="1.5" fill="#1e293b"/>
             </g>
         </svg>
     </div>
