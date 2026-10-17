@@ -3,145 +3,140 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Smart Home Dashboard</title>
+    <title>Cartoon Smart Home Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100vh;
-            font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #1b8fb0 0%, #30acc9 70%, #6cd2ea 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            touch-action: manipulation;
+        :root {
+            --bg-teal: #1b8fb0;
+            --main-teal: #30acc9;
+            --accent-yellow: #fde047;
+            --text-white: #ffffff;
+            --overlay-dark: rgba(0, 0, 0, 0.4);
+            --border-light: rgba(255, 255, 255, 0.2);
         }
 
-        /* Top Title & Cloud Status */
-        .top-header {
+        body {
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, var(--bg-teal) 0%, var(--main-teal) 70%, #6cd2ea 100%);
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            overflow: hidden; touch-action: manipulation;
+        }
+
+        /* --- Unified Status & Info Header --- */
+        .header-widget {
             position: absolute; top: 15px;
             display: flex; flex-direction: column; align-items: center;
-            background: rgba(0, 0, 0, 0.3); padding: 6px 16px;
-            border-radius: 12px; backdrop-filter: blur(5px); color: white;
-            border: 1px solid rgba(255,255,255,0.2); z-index: 100;
+            background: var(--overlay-dark); padding: 12px 24px;
+            border-radius: 16px; backdrop-filter: blur(8px);
+            color: var(--text-white); border: 1px solid var(--border-light);
+            z-index: 100; text-align: center;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            min-width: 250px;
         }
-        .main-title { font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        .status-text { font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; margin-top: 2px; }
-        .dot { height: 6px; width: 6px; border-radius: 50%; margin-right: 5px; }
-        .dot-green { background-color: #34d399; box-shadow: 0 0 6px #34d399; }
+        .main-title { font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .datetime-display { font-size: 0.85rem; font-weight: 500; opacity: 0.95; margin: 4px 0; }
+        .weather-display { font-size: 0.95rem; font-weight: 700; color: var(--accent-yellow); margin-bottom: 6px; }
+        .status-text { font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; }
+        .dot { height: 8px; width: 8px; border-radius: 50%; margin-right: 6px; }
+        .dot-green { background-color: #34d399; box-shadow: 0 0 8px #34d399; }
         .dot-red { background-color: #ef4444; }
 
-        /* Left and Right Side Cards */
-        .side-card {
-            position: absolute;
-            top: 50%; transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.35);
-            padding: 12px 16px;
-            border-radius: 14px;
-            backdrop-filter: blur(6px);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
-            text-align: center;
-            z-index: 90;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
-        }
-        .left-card { left: 20px; }
-        .right-card { right: 20px; }
-
-        .card-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; }
-        .card-value { font-size: 1rem; font-weight: 700; margin-top: 4px; color: #fde047; }
-
-        /* Cartoon House Container (Center) */
+        /* --- Animated Cartoon House Container --- */
         .house-container {
             position: relative;
-            width: 80%;
-            max-width: 360px;
+            width: 85%;
+            max-width: 380px;
             cursor: pointer;
-            transition: transform 0.2s ease;
+            transition: transform 0.2s ease, filter 0.3s ease;
+            filter: drop-shadow(0 15px 30px rgba(0,0,0,0.2));
         }
         .house-container:active { transform: scale(0.97); }
 
-        /* SVG Cartoon House Animation */
+        /* --- SVG Cartoon House Animation & Lighting --- */
         svg {
             width: 100%;
             height: auto;
-            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.25));
         }
 
+        /* OFF State (Default Cozy House) */
         .window-pane { fill: #475569; transition: 0.4s ease; }
         .house-body { fill: #f3f4f6; transition: 0.4s ease; }
         .roof { fill: #334155; transition: 0.4s ease; }
         .glow-effect { opacity: 0; transition: 0.4s ease; }
 
-        /* ON State (Warm Glowing House) */
-        .house-on .window-pane { fill: #fde047; filter: drop-shadow(0 0 12px #facc15); }
+        /* ON State (Warm Glowing Animation) */
+        .house-on .window-pane { fill: var(--accent-yellow); filter: drop-shadow(0 0 15px #facc15); }
         .house-on .house-body { fill: #fffbeb; }
         .house-on .roof { fill: #475569; }
-        .house-on .glow-effect { opacity: 1; }
+        .house-on .glow-effect { opacity: 1; animation: soft-glow 3s infinite alternate; }
 
-        /* Hint Text at Bottom */
-        .hint-text {
-            position: absolute; bottom: 20px;
-            color: white; font-weight: 600; font-size: 0.9rem;
-            background: rgba(0,0,0,0.3); padding: 8px 18px;
-            border-radius: 20px; backdrop-filter: blur(4px);
+        /* Soft Pulsing Glow Animation */
+        @keyframes soft-glow {
+            0% { opacity: 0.4; filter: blur(30px) scale(1); }
+            100% { opacity: 0.6; filter: blur(35px) scale(1.05); }
         }
 
-        /* Responsive adjustments for phones in portrait mode */
-        @media (max-width: 600px) {
-            .side-card { top: auto; bottom: 75px; transform: none; padding: 8px 12px; }
-            .left-card { left: 15px; }
-            .right-card { right: 15px; }
-            .card-value { font-size: 0.85rem; }
-            .card-label { font-size: 0.65rem; }
+        /* Instruction text below house */
+        .hint-text {
+            position: absolute; bottom: 20px;
+            color: var(--text-white);
+            font-weight: 600;
+            font-size: 0.9rem;
+            background: var(--overlay-dark);
+            padding: 10px 20px;
+            border-radius: 24px;
+            backdrop-filter: blur(6px);
+            border: 1px solid var(--border-light);
         }
     </style>
 </head>
 <body>
 
-    <!-- Top Header -->
-    <div class="top-header">
+    <!-- Integrated Status & Weather Header -->
+    <div class="header-widget">
         <span class="main-title">Smart Home Control</span>
-        <div id="status" class="status-text"><div class="dot dot-red"></div>Connecting...</div>
+        <div class="datetime-display" id="datetime">Loading...</div>
+        <div class="weather-display" id="weather">🌤️ Weather Loading...</div>
+        <div id="status" class="status-text"><div class="dot dot-red"></div>Connecting Cloud...</div>
     </div>
 
-    <!-- Left Card: Clock & Date -->
-    <div class="side-card left-card">
-        <div class="card-label">📅 Date & Time</div>
-        <div class="card-value" id="dateDisplay">Loading...</div>
-        <div class="card-value" id="timeDisplay" style="font-size: 1.1rem; color: #ffffff;">--:--:--</div>
-    </div>
-
-    <!-- Right Card: Temperature -->
-    <div class="side-card right-card">
-        <div class="card-label">🌡️ Temperature</div>
-        <div class="card-value" id="weatherDisplay">--°C</div>
-    </div>
-
-    <!-- Center Interactive Cartoon House -->
+    <!-- Animated Cartoon House (Click anywhere on the house to toggle!) -->
     <div class="house-container" id="houseCard" onclick="toggleLight()">
         <svg id="houseSvg" viewBox="0 0 400 350" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background glow aura when ON -->
             <circle class="glow-effect" cx="200" cy="180" r="140" fill="#fef08a" opacity="0.4" filter="blur(30px)"/>
+
+            <!-- Cartoon Roof -->
             <polygon class="roof" points="200,40 60,130 340,130"/>
             <polygon class="roof" points="200,40 340,130 320,130 200,55" fill="#64748b" opacity="0.4"/>
-            <rect class="house-body" x="90" y="130" width="220" height="170" rx="6"/>
+
+            <!-- Cartoon Walls / Body -->
+            <rect class="house-body" x="90" y="130" width="220" height="170" rx="8"/>
+
+            <!-- Cartoon Door -->
             <rect x="175" y="210" width="50" height="90" rx="4" fill="#b45309"/>
             <circle cx="215" cy="255" r="4" fill="#fbbf24"/>
-            <rect x="115" y="150" width="50" height="50" rx="6" fill="#1e293b"/>
+
+            <!-- Cartoon Windows -->
+            <!-- Left Window -->
+            <rect x="115" y="150" width="50" height="50" rx="8" fill="#1e293b"/>
             <rect class="window-pane" x="123" y="158" width="16" height="16" rx="2"/>
             <rect class="window-pane" x="141" y="158" width="16" height="16" rx="2"/>
             <rect class="window-pane" x="123" y="176" width="16" height="16" rx="2"/>
             <rect class="window-pane" x="141" y="176" width="16" height="16" rx="2"/>
-            <rect x="235" y="150" width="50" height="50" rx="6" fill="#1e293b"/>
+
+            <!-- Right Window -->
+            <rect x="235" y="150" width="50" height="50" rx="8" fill="#1e293b"/>
             <rect class="window-pane" x="243" y="158" width="16" height="16" rx="2"/>
             <rect class="window-pane" x="261" y="158" width="16" height="16" rx="2"/>
             <rect class="window-pane" x="243" y="176" width="16" height="16" rx="2"/>
             <rect class="window-pane" x="261" y="176" width="16" height="16" rx="2"/>
+
+            <!-- Chimney and Smoke -->
             <rect x="270" y="70" width="25" height="45" rx="3" fill="#94a3b8"/>
         </svg>
     </div>
@@ -149,36 +144,40 @@
     <div class="hint-text" id="hintText">Tap house to TURN ON 💡</div>
 
     <script>
-        // --- Live Clock & Date Script ---
+        // --- Real-Time Date & Time Clock ---
         function updateDateTime() {
             const now = new Date();
-            const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            document.getElementById("dateDisplay").innerText = dateStr;
-            document.getElementById("timeDisplay").innerText = timeStr;
+            const dateOptions = { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' };
+            const timeOptions = { hour: '2-digit', minute: '2-digit', second: '2-digit' };
+            const dateStr = now.toLocaleDateString('en-US', dateOptions);
+            const timeStr = now.toLocaleTimeString('en-US', timeOptions);
+            document.getElementById("datetime").innerText = `${dateStr} | ${timeStr}`;
         }
-        setInterval(updateDateTime, 1000);
-        updateDateTime();
+        setInterval(updateDateTime, 1000); // Update every 1 second
+        updateDateTime(); // Initial call
 
-        // --- Live Weather Fetcher ---
-        async function fetchWeather() {
+        // --- Live Local Weather Temperature ---
+        async function fetchTemperature() {
             try {
+                // Uses automatic location detection for accurate weather
                 navigator.geolocation.getCurrentPosition(async (position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
                     const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
                     const data = await res.json();
-                    document.getElementById("weatherDisplay").innerText = `${data.current_weather.temperature}°C`;
+                    document.getElementById("weather").innerText = `🌡️ Local: ${data.current_weather.temperature}°C`;
                 }, () => {
-                    document.getElementById("weatherDisplay").innerText = "28°C";
+                    // Fallback to a default temperature if location access is denied
+                    document.getElementById("weather").innerText = `🌡️ 28.5°C`;
                 });
             } catch (e) {
-                document.getElementById("weatherDisplay").innerText = "28°C";
+                console.log("Weather fetch failed.");
+                document.getElementById("weather").innerText = "28.5°C";
             }
         }
-        fetchWeather();
+        fetchTemperature();
 
-        // --- MQTT Cloud Connection ---
+        // --- MQTT Cloud Connection for ESP32 ---
         const client = new Paho.MQTT.Client("broker.emqx.io", 8084, "/mqtt", "web_cartoon_" + parseInt(Math.random() * 100000));
         let lightState = "OFF";
 
@@ -207,6 +206,7 @@
             }
         });
 
+        // Toggles the lamp both physically and in the animated cartoon house
         function toggleLight() {
             let nextState = (lightState === "OFF") ? "ON" : "OFF";
             let msg = new Paho.MQTT.Message(nextState);
@@ -214,6 +214,7 @@
             client.send(msg);
         }
 
+        // Updates the visual cartoon house animation based on the ESP32 status
         function updateUI() {
             if (lightState === "ON") {
                 houseCard.classList.add("house-on");
