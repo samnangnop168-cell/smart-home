@@ -6,8 +6,17 @@
     <title>Smart Home Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
     <style>
-        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #fef3c7 0%, #fae8ff 50%, #e0f2fe 100%); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .dashboard { background: rgba(255, 255, 255, 0.92); padding: 25px; border-radius: 28px; box-shadow: 0 20px 40px rgba(14, 116, 144, 0.15); width: 92%; max-width: 400px; text-align: center; border: 3px solid #ffffff; }
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #fef3c7 0%, #fae8ff 50%, #e0f2fe 100%); 
+            display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; 
+        }
+        .dashboard { 
+            background: rgba(255, 255, 255, 0.92); 
+            padding: 25px; border-radius: 28px; 
+            box-shadow: 0 20px 40px rgba(14, 116, 144, 0.15); 
+            width: 92%; max-width: 400px; text-align: center; border: 3px solid #ffffff; 
+        }
         .header { background: #e0f2fe; padding: 12px; border-radius: 16px; margin-bottom: 20px; font-weight: 700; color: #0284c7; }
         .card { background: #f8fafc; padding: 20px; border-radius: 20px; border: 2px solid #e2e8f0; }
         .status { font-size: 0.95rem; color: #64748b; margin-bottom: 15px; font-weight: 600; }
@@ -25,12 +34,14 @@
             <button id="toggleBtn" class="button btn-off" onclick="toggleLight()">TURN ON</button>
         </div>
     </div>
+
     <script>
-        const client = new Paho.MQTT.Client("broker.hivemq.com", 8000, "web_" + parseInt(Math.random() * 100000));
+        // Connecting using WSS (Secure WebSockets) on Port 8884 for HTTPS GitHub Pages
+        const client = new Paho.MQTT.Client("broker.hivemq.com", 8884, "web_" + parseInt(Math.random() * 100000));
         let lightState = "OFF";
 
         client.onConnectionLost = function(responseObject) {
-            document.getElementById("status").innerText = "Disconnected from Cloud";
+            document.getElementById("status").innerText = "Disconnected from Cloud 🔴";
         };
 
         client.onMessageArrived = function(message) {
@@ -38,10 +49,16 @@
             updateUI();
         };
 
-        client.connect({onSuccess: function() {
-            document.getElementById("status").innerText = "Connected to Cloud 🟢";
-            client.subscribe("samnang/smarthome/led/status");
-        }});
+        client.connect({
+            useSSL: true, // Required for HTTPS
+            onSuccess: function() {
+                document.getElementById("status").innerText = "Connected to Cloud 🟢";
+                client.subscribe("samnang/smarthome/led/status");
+            },
+            onFailure: function(err) {
+                document.getElementById("status").innerText = "Connection Failed ❌";
+            }
+        });
 
         function toggleLight() {
             let nextState = (lightState === "OFF") ? "ON" : "OFF";
