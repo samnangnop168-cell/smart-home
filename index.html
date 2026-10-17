@@ -36,12 +36,12 @@
     </div>
 
     <script>
-        // Connecting using WSS (Secure WebSockets) on Port 8884 for HTTPS GitHub Pages
-        const client = new Paho.MQTT.Client("broker.hivemq.com", 8884, "web_" + parseInt(Math.random() * 100000));
+        // Using EMQX Secure WebSockets on Port 8084
+        const client = new Paho.MQTT.Client("broker.emqx.io", 8084, "web_" + parseInt(Math.random() * 100000));
         let lightState = "OFF";
 
         client.onConnectionLost = function(responseObject) {
-            document.getElementById("status").innerText = "Disconnected from Cloud 🔴";
+            document.getElementById("status").innerText = "Disconnected 🔴";
         };
 
         client.onMessageArrived = function(message) {
@@ -50,7 +50,7 @@
         };
 
         client.connect({
-            useSSL: true, // Required for HTTPS
+            useSSL: true,
             onSuccess: function() {
                 document.getElementById("status").innerText = "Connected to Cloud 🟢";
                 client.subscribe("samnang/smarthome/led/status");
