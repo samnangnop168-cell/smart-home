@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #fef3c7 0%, #fae8ff 50%, #e0f2fe 100%); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .dashboard { background: rgba(255, 255, 255, 0.92); padding: 25px; border-radius: 28px; box-shadow: 0 20px 40px rgba(14, 116, 144, 0.15); width: 92%; max-width: 400px; text-align: center; border: 3px solid #ffffff; }
+        .header { background: #e0f2fe; padding: 12px; border-radius: 16px; margin-bottom: 20px; font-weight: 700; color: #0284c7; }
+        .card { background: #f8fafc; padding: 20px; border-radius: 20px; border: 2px solid #e2e8f0; }
+        .status { font-size: 0.95rem; color: #64748b; margin-bottom: 15px; font-weight: 600; }
+        .button { display: inline-block; width: 100%; padding: 14px 0; border-radius: 14px; font-weight: 700; color: white; border: none; cursor: pointer; text-decoration: none; font-size: 1.1rem; transition: 0.2s; }
+        .btn-on { background-color: #22c55e; box-shadow: 0 4px 10px rgba(34,197,94,0.3); }
+        .btn-off { background-color: #ef4444; box-shadow: 0 4px 10px rgba(239,68,68,0.3); }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">🏠 MY SMART HOME</div>
+        <div class="card">
+            <h3>Living Room Light</h3>
+            <div id="status" class="status">Connecting to Cloud...</div>
+            <button id="toggleBtn" class="button btn-off" onclick="toggleLight()">TURN ON</button>
+        </div>
+    </div>
+    <script>
+        const client = new Paho.MQTT.Client("broker.hivemq.com", 8000, "web_" + parseInt(Math.random() * 100000));
+        let lightState = "OFF";
+
+        client.onConnectionLost = function(responseObject) {
+            document.getElementById("status").innerText = "Disconnected from Cloud";
+        };
+
+        client.onMessageArrived = function(message) {
+            lightState = message.payloadString;
+            updateUI();
+        };
+
+        client.connect({onSuccess: function() {
+            document.getElementById("status").innerText = "Connected to Cloud 🟢";
+            client.subscribe("samnang/smarthome/led/status");
+        }});
+
+        function toggleLight() {
+            let nextState = (lightState === "OFF") ? "ON" : "OFF";
+            let msg = new Paho.MQTT.Message(nextState);
+            msg.destinationName = "samnang/smarthome/led";
+            client.send(msg);
+        }
+
+        function updateUI() {
+            let btn = document.getElementById("toggleBtn");
+            let stat = document.getElementById("status");
+            if (lightState === "ON") {
+                btn.innerText = "TURN OFF";
+                btn.className = "button btn-off";
+                stat.innerText = "Status: ON 💡";
+            } else {
+                btn.innerText = "TURN ON";
+                btn.className = "button btn-on";
+                stat.innerText = "Status: OFF 🔌";
+            }
+        }
+    </script>
+</body>
+</html>
