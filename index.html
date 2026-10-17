@@ -1,253 +1,88 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>SMART HOME ISOMETRIC</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
-    <style>
-        :root {
-            --bg-color: #55b5d1;
-            --main-text: #ffffff;
-            --accent-glow: #e0f2fe;
-            --active-glow: rgba(255, 255, 255, 0.9);
-            --inactive-dim: rgba(255, 255, 255, 0.15);
-        }
+#include <WiFi.h>
 
-        body {
-            font-family: 'Poppins', 'Segoe UI', sans-serif;
-            background: linear-gradient(160deg, #44a6c2 0%, var(--bg-color) 70%, #6cd2ea 100%);
-            color: var(--main-text);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            overflow: hidden;
-            touch-action: manipulation;
-        }
+const char* ssid = "SAMNANG VIRAKBOT";
+const char* password = "bot12112021";
 
-        /* Loading Screen */
-        #loader {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg-color); display: flex; flex-direction: column;
-            justify-content: center; align-items: center; z-index: 1000;
-            transition: opacity 0.5s ease;
-        }
-        .loader-spinner { border: 5px solid var(--accent-glow); border-top: 5px solid white; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        #loader p { margin-top: 20px; font-size: 1.1rem; font-weight: 600; }
+WiFiServer server(80);
+const int ledPin = 2;
+String lampState = "OFF";
 
-        /* Status UI */
-        .status-header {
-            position: absolute; top: 10px; width: 90%; max-width: 400px;
-            display: flex; flex-direction: column; align-items: center;
-            background: rgba(255, 255, 255, 0.15); border-radius: 12px;
-            padding: 8px; backdrop-filter: blur(5px); z-index: 900;
-        }
-        .network-icon { font-size: 1.5rem; margin-bottom: 2px; text-shadow: 0 0 10px white; }
-        .main-title { font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-        .status-text { font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; }
-        .dot { height: 8px; width: 8px; border-radius: 50%; margin-right: 6px; }
-        .dot-green { background-color: #34d399; box-shadow: 0 0 8px #34d399; }
-        .dot-red { background-color: #ef4444; }
+void setup() {
+  Serial.begin(115200);
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, LOW);
 
-        /* Isometric Container */
-        .isometric-container {
-            width: 100vw; height: 100vh;
-            display: flex; justify-content: center; align-items: center;
-            overflow: hidden; perspective: 1000px;
-        }
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
 
-        .isometric-scene {
-            width: 90%; max-width: 320px; /* Base size for all screens */
-            position: relative;
-            transform: scale(0.9); /* Prevent overflow on small screens */
-        }
+  Serial.println("\nConnected!");
+  Serial.print("IP Address: ");
+  Serial.println(WiFi.localIP());
 
-        /* Central House Base */
-        .house-base {
-            width: 100%; height: auto;
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--inactive-dim); /* Placeholder */
-            border-radius: 20px;
-            z-index: 1;
-        }
+  server.begin();
+}
 
-        /* Smart Device Class */
-        .device {
-            position: absolute;
-            background-color: var(--active-glow);
-            border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 1.2rem; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(14, 116, 144, 0.2);
-            z-index: 2; border: 2px solid white;
-            transition: 0.3s ease, box-shadow 0.2s;
-        }
-
-        .device:active { transform: scale(0.95); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .device.inactive { background-color: rgba(255, 255, 255, 0.4); box-shadow: none; border-color: rgba(255, 255, 255, 0.5); color: rgba(0,0,0,0.5); }
-
-        /* The BUS Line Class */
-        .bus-line {
-            position: absolute; border-radius: 4px;
-            background: linear-gradient(160deg, #e0f2fe 0%, #b0e5f0 100%);
-            box-shadow: 0 0 10px var(--accent-glow);
-            z-index: 0;
-            transition: 0.3s ease;
-        }
-        .bus-line.inactive { opacity: 0.2; box-shadow: none; }
-
-        /* --- Device Positions (Responsive Scaling) --- */
-        .device.smart-tv       { top: 5%; left: 32%; }
-        .device.temp-control  { top: 5%; left: 60%; }
-        .device.ac             { top: 15%; right: 0; }
-        .device.voice-assist  { top: 40%; right: -5%; }
-        .device.lamp          { bottom: 15%; right: 10%; } /* This is your ESP32 Control! */
-        .device.router        { bottom: 0; left: 60%; }
-        .device.smart-lock     { bottom: -5%; left: 40%; }
-        .device.camera         { bottom: -5%; left: 20%; }
-        .device.vacuum         { bottom: 15%; left: 0; }
-        .device.voice-control { top: 35%; left: -10%; }
-
-        /* BUS Lines Positions */
-        #line-main    { width: 100%; height: 50%; top: 25%; left: 0%; transform: skewY(15deg) skewX(-15deg); }
-        #line-to-tv   { width: 30%; height: 5%; top: 25%; left: 10%; }
-        #line-to-ac   { width: 5%; height: 20%; top: 10%; right: 10%; }
-        #line-to-lamp { width: 5%; height: 20%; bottom: 10%; right: 15%; }
-        #line-to-lock { width: 30%; height: 5%; bottom: 5%; left: 10%; }
-
-        /* Responsiveness for PC and larger screens */
-        @media (min-width: 600px) {
-            .isometric-scene { max-width: 400px; transform: scale(1.0); }
-            .device { font-size: 1.5rem; }
-        }
-
-    </style>
-</head>
-<body>
-    <!-- Loading Screen -->
-    <div id="loader">
-        <div class="loader-spinner"></div>
-        <p>Connecting to Cloud...</p>
-    </div>
-
-    <!-- Status UI -->
-    <div class="status-header">
-        <span class="network-icon">📶</span>
-        <span class="main-title">SMART HOME</span>
-        <div id="status" class="status-text"><div class="dot dot-red"></div>CONNECTING</div>
-    </div>
-
-    <!-- Isometric Container -->
-    <div class="isometric-container">
-        <div class="isometric-scene" id="scene">
-            <!-- The BUS Lines (SVG/CSS) -->
-            <div id="line-main" class="bus-line"></div>
-            <div id="line-to-tv" class="bus-line"></div>
-            <div id="line-to-ac" class="bus-line"></div>
-            <div id="line-to-lamp" class="bus-line"></div>
-            <div id="line-to-lock" class="bus-line"></div>
-
-            <!-- Central House Base -->
-            <div class="house-base">
-                <!-- Using an actual image from a trusted source for reliability -->
-                <img src="https://static.thenounproject.com/png/5136979-200.png" alt="House Isometric" style="width: 100%; opacity: 0.8; padding: 20px; box-sizing: border-box;">
-            </div>
-
-            <!-- Smart Devices (Clickable) -->
-            <div id="device-smart-tv" class="device smart-tv">📺</div>
-            <div id="device-temp" class="device temp-control">🌡️</div>
-            <div id="device-ac" class="device ac">❄️</div>
-            <div id="device-voice-assist" class="device voice-assist">🔊</div>
-            <!-- YOUR ESP32 LAMP CONTROL -->
-            <div id="device-lamp" class="device lamp inactive" onclick="toggleLamp()">💡</div>
-            <div id="device-router" class="device router">🌐</div>
-            <div id="device-smart-lock" class="device smart-lock">🔒</div>
-            <div id="device-camera" class="device camera">📹</div>
-            <div id="device-vacuum" class="device vacuum">🧹</div>
-            <div id="device-voice-control" class="device voice-control">🎙️</div>
-        </div>
-    </div>
-
-    <script>
-        // Use EMQX Secure WebSocket on Port 8084
-        const client = new Paho.MQTT.Client("broker.emqx.io", 8084, "/mqtt", "web_iso_" + parseInt(Math.random() * 100000));
-        let lampState = "OFF";
-
-        const statusEl = document.getElementById("status");
-        const lampEl = document.getElementById("device-lamp");
-        const loader = document.getElementById("loader");
-        const mainLine = document.getElementById("line-main");
-
-        client.onConnectionLost = function(responseObject) {
-            statusEl.innerHTML = '<div class="dot dot-red"></div>DISCONNECTED';
-            setDeviceActive('device-lamp', false); // Optional: dim lamp on disconnect
-        };
-
-        client.onMessageArrived = function(message) {
-            // Since we know the message is "ON" or "OFF" for the lamp status, we don't need to parse topics
-            if (message.destinationName === "samnang/smarthome/led/status") {
-                lampState = message.payloadString;
-                updateLampUI();
-            }
-        };
-
-        client.connect({
-            useSSL: true,
-            timeout: 5,
-            onSuccess: function() {
-                // Remove loading screen
-                loader.style.opacity = '0';
-                setTimeout(() => loader.style.display = 'none', 500);
-
-                statusEl.innerHTML = '<div class="dot dot-green"></div>CONNECTED';
-                client.subscribe("samnang/smarthome/led/status");
-                // Option: Request an initial status update by publishing "" to sub topic
-                // client.publish("samnang/smarthome/led", "");
-            },
-            onFailure: function(err) {
-                statusEl.innerHTML = '<div class="dot dot-red"></div>FAILED';
-                loader.style.display = 'none'; // Ensure loader disappears
-            }
-        });
-
-        function toggleLamp() {
-            // Can only control if connected
-            if (statusEl.innerText.includes("DISCONNECTED")) return;
-
-            let nextState = (lampState === "OFF") ? "ON" : "OFF";
-            let msg = new Paho.MQTT.Message(nextState);
-            msg.destinationName = "samnang/smarthome/led";
-            client.send(msg);
-        }
-
-        function updateLampUI() {
-            if (lampState === "ON") {
-                lampEl.classList.remove('inactive');
-                mainLine.classList.remove('inactive'); // Optional: Light up the MAIN BUS line when any device is active
+void loop() {
+  WiFiClient client = server.available();   
+  if (client) {
+    String currentLine = "";                
+    while (client.connected()) {
+      if (client.available()) {
+        char c = client.read();
+        if (c == '\n') {                    
+          if (currentLine.length() == 0) {
+            client.println("HTTP/1.1 200 OK");
+            client.println("Content-type:text/html; charset=utf-8");
+            client.println("Connection: close");
+            client.println();
+            
+            // Beautiful Cartoon Dashboard HTML served directly by ESP32
+            client.println("<!DOCTYPE html><html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1'>");
+            client.println("<link href='https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap' rel='stylesheet'>");
+            client.println("<style>");
+            client.println("body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #fef3c7 0%, #fae8ff 50%, #e0f2fe 100%); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }");
+            client.println(".dashboard { background: rgba(255, 255, 255, 0.90); backdrop-filter: blur(12px); padding: 25px; border-radius: 28px; box-shadow: 0 20px 40px rgba(14, 116, 144, 0.15); width: 92%; max-width: 400px; text-align: center; border: 3px solid #ffffff; }");
+            client.println(".header { background: #e0f2fe; padding: 12px; border-radius: 16px; margin-bottom: 20px; border: 2px solid #bae6fd; font-weight: 700; color: #0284c7; }");
+            client.println(".card { background: #f8fafc; padding: 20px; border-radius: 20px; border: 2px solid #e2e8f0; }");
+            client.println(".icon { font-size: 45px; margin-bottom: 10px; }");
+            client.println(".title { font-size: 1rem; font-weight: 700; color: #1e293b; margin-bottom: 15px; }");
+            client.println(".btn { display: inline-block; width: 100%; padding: 14px 0; font-size: 1.1rem; font-weight: 700; color: white; border-radius: 14px; text-decoration: none; cursor: pointer; box-sizing: border-box; }");
+            client.println(".btn-on { background-color: #22c55e; box-shadow: 0 4px 10px rgba(34,197,94,0.3); }");
+            client.println(".btn-off { background-color: #ef4444; box-shadow: 0 4px 10px rgba(239,68,68,0.3); }");
+            client.println("</style></head><body>");
+            client.println("<div class='dashboard'>");
+            client.println("<div class='header'>🏠 MY SMART HOME</div>");
+            client.println("<div class='card'>");
+            client.println("<div class='icon'>" + String(lampState == "ON" ? "💡" : "🔌") + "</div>");
+            client.println("<div class='title'>Living Room Light</div>");
+            
+            if (lampState == "OFF") {
+              client.println("<a href='/H' class='btn btn-off'>TURN ON</a>");
             } else {
-                lampEl.classList.add('inactive');
-                // You could check if *any* other device is active before dimming the main line.
-                // For this example, we dim it with the lamp.
-                mainLine.classList.add('inactive');
+              client.println("<a href='/L' class='btn btn-on'>TURN OFF</a>");
             }
+            
+            client.println("</div></div></body></html>");
+            client.println();
+            break;
+          } else {
+            if (currentLine.startsWith("GET /H")) {
+              digitalWrite(ledPin, HIGH);
+              lampState = "ON";
+            } else if (currentLine.startsWith("GET /L")) {
+              digitalWrite(ledPin, LOW);
+              lampState = "OFF";
+            }
+            currentLine = "";
+          }
+        } else if (c != '\r') {
+          currentLine += c;
         }
-
-        // Helper function for UI states of all other (unconnected) devices
-        function setDeviceActive(deviceId, isActive) {
-            const el = document.getElementById(deviceId);
-            if (!el) return;
-            if (isActive) { el.classList.remove('inactive'); } else { el.classList.add('inactive'); }
-        }
-
-        // Set initial state for unconnected placeholder devices
-        ['device-smart-tv', 'device-temp', 'device-ac', 'device-voice-assist', 'device-router', 'device-smart-lock', 'device-camera', 'device-vacuum', 'device-voice-control'].forEach(id => {
-            setDeviceActive(id, true); // You can choose to dim placeholders (inactive) or not (active).
-        });
-
-    </style>
-</body>
-</html>
+      }
+    }
+    client.stop();
+  }
+}
