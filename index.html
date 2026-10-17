@@ -1,88 +1,85 @@
-#include <WiFi.h>
-
-const char* ssid = "SAMNANG VIRAKBOT";
-const char* password = "bot12112021";
-
-WiFiServer server(80);
-const int ledPin = 2;
-String lampState = "OFF";
-
-void setup() {
-  Serial.begin(115200);
-  pinMode(ledPin, OUTPUT);
-  digitalWrite(ledPin, LOW);
-
-  WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
-  }
-
-  Serial.println("\nConnected!");
-  Serial.print("IP Address: ");
-  Serial.println(WiFi.localIP());
-
-  server.begin();
-}
-
-void loop() {
-  WiFiClient client = server.available();   
-  if (client) {
-    String currentLine = "";                
-    while (client.connected()) {
-      if (client.available()) {
-        char c = client.read();
-        if (c == '\n') {                    
-          if (currentLine.length() == 0) {
-            client.println("HTTP/1.1 200 OK");
-            client.println("Content-type:text/html; charset=utf-8");
-            client.println("Connection: close");
-            client.println();
-            
-            // Beautiful Cartoon Dashboard HTML served directly by ESP32
-            client.println("<!DOCTYPE html><html><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1'>");
-            client.println("<link href='https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap' rel='stylesheet'>");
-            client.println("<style>");
-            client.println("body { font-family: 'Poppins', sans-serif; background: linear-gradient(135deg, #fef3c7 0%, #fae8ff 50%, #e0f2fe 100%); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }");
-            client.println(".dashboard { background: rgba(255, 255, 255, 0.90); backdrop-filter: blur(12px); padding: 25px; border-radius: 28px; box-shadow: 0 20px 40px rgba(14, 116, 144, 0.15); width: 92%; max-width: 400px; text-align: center; border: 3px solid #ffffff; }");
-            client.println(".header { background: #e0f2fe; padding: 12px; border-radius: 16px; margin-bottom: 20px; border: 2px solid #bae6fd; font-weight: 700; color: #0284c7; }");
-            client.println(".card { background: #f8fafc; padding: 20px; border-radius: 20px; border: 2px solid #e2e8f0; }");
-            client.println(".icon { font-size: 45px; margin-bottom: 10px; }");
-            client.println(".title { font-size: 1rem; font-weight: 700; color: #1e293b; margin-bottom: 15px; }");
-            client.println(".btn { display: inline-block; width: 100%; padding: 14px 0; font-size: 1.1rem; font-weight: 700; color: white; border-radius: 14px; text-decoration: none; cursor: pointer; box-sizing: border-box; }");
-            client.println(".btn-on { background-color: #22c55e; box-shadow: 0 4px 10px rgba(34,197,94,0.3); }");
-            client.println(".btn-off { background-color: #ef4444; box-shadow: 0 4px 10px rgba(239,68,68,0.3); }");
-            client.println("</style></head><body>");
-            client.println("<div class='dashboard'>");
-            client.println("<div class='header'>🏠 MY SMART HOME</div>");
-            client.println("<div class='card'>");
-            client.println("<div class='icon'>" + String(lampState == "ON" ? "💡" : "🔌") + "</div>");
-            client.println("<div class='title'>Living Room Light</div>");
-            
-            if (lampState == "OFF") {
-              client.println("<a href='/H' class='btn btn-off'>TURN ON</a>");
-            } else {
-              client.println("<a href='/L' class='btn btn-on'>TURN OFF</a>");
-            }
-            
-            client.println("</div></div></body></html>");
-            client.println();
-            break;
-          } else {
-            if (currentLine.startsWith("GET /H")) {
-              digitalWrite(ledPin, HIGH);
-              lampState = "ON";
-            } else if (currentLine.startsWith("GET /L")) {
-              digitalWrite(ledPin, LOW);
-              lampState = "OFF";
-            }
-            currentLine = "";
-          }
-        } else if (c != '\r') {
-          currentLine += c;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
+    <style>
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: linear-gradient(135deg, #fef3c7 0%, #fae8ff 50%, #e0f2fe 100%); 
+            display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; 
         }
-      }
-    }
-    client.stop();
-  }
-}
+        .dashboard { 
+            background: rgba(255, 255, 255, 0.92); 
+            padding: 25px; border-radius: 28px; 
+            box-shadow: 0 20px 40px rgba(14, 116, 144, 0.15); 
+            width: 92%; max-width: 400px; text-align: center; border: 3px solid #ffffff; 
+        }
+        .header { background: #e0f2fe; padding: 12px; border-radius: 16px; margin-bottom: 20px; font-weight: 700; color: #0284c7; }
+        .card { background: #f8fafc; padding: 20px; border-radius: 20px; border: 2px solid #e2e8f0; }
+        .status { font-size: 0.95rem; color: #64748b; margin-bottom: 15px; font-weight: 600; }
+        .button { display: inline-block; width: 100%; padding: 14px 0; border-radius: 14px; font-weight: 700; color: white; border: none; cursor: pointer; text-decoration: none; font-size: 1.1rem; transition: 0.2s; }
+        .btn-on { background-color: #22c55e; box-shadow: 0 4px 10px rgba(34,197,94,0.3); }
+        .btn-off { background-color: #ef4444; box-shadow: 0 4px 10px rgba(239,68,68,0.3); }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">🏠 MY SMART HOME</div>
+        <div class="card">
+            <h3>Living Room Light</h3>
+            <div id="status" class="status">Connecting to Cloud...</div>
+            <button id="toggleBtn" class="button btn-off" onclick="toggleLight()">TURN ON</button>
+        </div>
+    </div>
+
+    <script>
+        const client = new Paho.MQTT.Client("broker.emqx.io", 8084, "/mqtt", "web_" + parseInt(Math.random() * 100000));
+        let lightState = "OFF";
+
+        client.onConnectionLost = function(responseObject) {
+            document.getElementById("status").innerText = "Disconnected 🔴";
+        };
+
+        client.onMessageArrived = function(message) {
+            lightState = message.payloadString;
+            updateUI();
+        };
+
+        client.connect({
+            useSSL: true,
+            timeout: 5,
+            onSuccess: function() {
+                document.getElementById("status").innerText = "Connected to Cloud 🟢";
+                client.subscribe("samnang/smarthome/led/status");
+            },
+            onFailure: function(err) {
+                document.getElementById("status").innerText = "Connection Failed ❌";
+            }
+        });
+
+        function toggleLight() {
+            let nextState = (lightState === "OFF") ? "ON" : "OFF";
+            let msg = new Paho.MQTT.Message(nextState);
+            msg.destinationName = "samnang/smarthome/led";
+            client.send(msg);
+        }
+
+        function updateUI() {
+            let btn = document.getElementById("toggleBtn");
+            let stat = document.getElementById("status");
+            if (lightState === "ON") {
+                btn.innerText = "TURN OFF";
+                btn.className = "button btn-off";
+                stat.innerText = "Status: ON 💡";
+            } else {
+                btn.innerText = "TURN ON";
+                btn.className = "button btn-on";
+                stat.innerText = "Status: OFF 🔌";
+            }
+        }
+    </script>
+</body>
+</html>
