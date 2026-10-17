@@ -60,7 +60,7 @@
         .house-container {
             position: relative;
             width: 85%;
-            max-width: 440px;
+            max-width: 480px;
             cursor: pointer;
             transition: transform 0.2s ease;
         }
@@ -100,7 +100,7 @@
 
         /* Dog tail wagging */
         .dog-tail {
-            transform-origin: 310px 270px;
+            transform-origin: 360px 270px;
             animation: dogTailWag 0.4s infinite alternate ease-in-out;
         }
         @keyframes dogTailWag {
@@ -161,7 +161,7 @@
 
     <!-- Center Interactive Cartoon House -->
     <div class="house-container" id="houseCard" onclick="toggleLight()">
-        <svg id="houseSvg" viewBox="0 0 450 350" xmlns="http://www.w3.org/2000/svg">
+        <svg id="houseSvg" viewBox="0 0 490 350" xmlns="http://www.w3.org/2000/svg">
             <circle class="glow-effect" cx="190" cy="180" r="140" fill="#fef08a" opacity="0.4" filter="blur(30px)"/>
             
             <!-- House Structure -->
@@ -182,59 +182,59 @@
             <rect class="window-pane" x="251" y="176" width="16" height="16" rx="2"/>
             <rect x="260" y="70" width="25" height="45" rx="3" fill="#94a3b8"/>
 
-            <!-- ================= SLEEPING TRICOLOR PUPPY (House OFF) ================= -->
+            <!-- ================= SLEEPING TRICOLOR PUPPY (Shifted Further Right) ================= -->
             <g class="sleeping-dog">
                 <!-- White & Brown Curled Body -->
-                <ellipse cx="295" cy="280" rx="24" ry="16" fill="#ffffff"/>
-                <ellipse cx="302" cy="275" rx="14" ry="10" fill="#b45309"/> <!-- Dark brown back patch -->
+                <ellipse cx="365" cy="280" rx="24" ry="16" fill="#ffffff"/>
+                <ellipse cx="372" cy="275" rx="14" ry="10" fill="#b45309"/> <!-- Dark brown back patch -->
                 <!-- Head resting -->
-                <circle cx="272" cy="275" r="13" fill="#ffffff"/>
-                <circle cx="268" cy="271" r="9" fill="#d97706"/> <!-- Brown eye patch -->
+                <circle cx="342" cy="275" r="13" fill="#ffffff"/>
+                <circle cx="338" cy="271" r="9" fill="#d97706"/> <!-- Brown eye patch -->
                 <!-- Floppy Brown Ear -->
-                <ellipse cx="265" cy="282" rx="5" ry="9" fill="#92400e" transform="rotate(30 265 282)"/>
+                <ellipse cx="335" cy="282" rx="5" ry="9" fill="#92400e" transform="rotate(30 335 282)"/>
                 <!-- Closed Eyes (Sleeping) -->
-                <path d="M 268 273 Q 272 277 276 273" stroke="#451a03" stroke-width="1.5" fill="none"/>
+                <path d="M 338 273 Q 342 277 346 273" stroke="#451a03" stroke-width="1.5" fill="none"/>
                 <!-- Sleeping Z's -->
-                <text x="260" y="250" fill="#ffffff" font-size="14" font-weight="bold" class="sleep-z">Z</text>
-                <text x="272" y="238" fill="#ffffff" font-size="12" font-weight="bold" class="sleep-z" style="animation-delay: 0.7s;">z</text>
+                <text x="330" y="250" fill="#ffffff" font-size="14" font-weight="bold" class="sleep-z">Z</text>
+                <text x="342" y="238" fill="#ffffff" font-size="12" font-weight="bold" class="sleep-z" style="animation-delay: 0.7s;">z</text>
             </g>
 
-            <!-- ================= AWAKE TRICOLOR PUPPY (House ON) ================= -->
+            <!-- ================= AWAKE TRICOLOR PUPPY (Shifted Further Right) ================= -->
             <g class="awake-dog">
-                <!-- Tail Wagging (Brown tipped) -->
-                <path class="dog-tail" d="M 310 275 Q 325 260 320 245" stroke="#78350f" stroke-width="6" stroke-linecap="round" fill="none"/>
+                <!-- Tail Wagging -->
+                <path class="dog-tail" d="M 360 275 Q 375 260 370 245" stroke="#78350f" stroke-width="6" stroke-linecap="round" fill="none"/>
                 <!-- White Chest/Body with Dark Saddle Patch -->
-                <ellipse cx="295" cy="270" rx="16" ry="22" fill="#ffffff"/>
-                <path d="M 292 252 Q 312 265 305 285 Q 295 280 292 252" fill="#78350f"/> <!-- Back patch -->
+                <ellipse cx="345" cy="270" rx="16" ry="22" fill="#ffffff"/>
+                <path d="M 342 252 Q 362 265 355 285 Q 345 280 342 252" fill="#78350f"/>
                 
-                <!-- Head with Brown Patches and White Center Stripe (Matches your image!) -->
-                <circle cx="295" cy="232" r="16" fill="#ffffff"/>
-                <path d="M 279 230 Q 285 218 290 220 Q 288 238 279 230" fill="#b45309"/> <!-- Left brown eye patch -->
-                <path d="M 311 230 Q 305 218 300 220 Q 302 238 311 230" fill="#b45309"/> <!-- Right brown eye patch -->
+                <!-- Head with Brown Patches -->
+                <circle cx="345" cy="232" r="16" fill="#ffffff"/>
+                <path d="M 329 230 Q 335 218 340 220 Q 338 238 329 230" fill="#b45309"/>
+                <path d="M 361 230 Q 355 218 350 220 Q 352 238 361 230" fill="#b45309"/>
                 
                 <!-- Floppy Brown Ears -->
-                <ellipse cx="276" cy="235" rx="7" ry="13" fill="#92400e" transform="rotate(-20 276 235)"/>
-                <ellipse cx="314" cy="235" rx="7" ry="13" fill="#92400e" transform="rotate(20 314 235)"/>
+                <ellipse cx="326" cy="235" rx="7" ry="13" fill="#92400e" transform="rotate(-20 326 235)"/>
+                <ellipse cx="364" cy="235" rx="7" ry="13" fill="#92400e" transform="rotate(20 364 235)"/>
                 
-                <!-- Big Warm Eyes -->
-                <circle cx="288" cy="230" r="3.5" fill="#451a03"/>
-                <circle cx="287" cy="229" r="1.2" fill="#fff"/>
-                <circle cx="302" cy="230" r="3.5" fill="#451a03"/>
-                <circle cx="301" cy="229" r="1.2" fill="#fff"/>
+                <!-- Eyes -->
+                <circle cx="338" cy="230" r="3.5" fill="#451a03"/>
+                <circle cx="337" cy="229" r="1.2" fill="#fff"/>
+                <circle cx="352" cy="230" r="3.5" fill="#451a03"/>
+                <circle cx="351" cy="229" r="1.2" fill="#fff"/>
                 
-                <!-- Nose & Happy Open Mouth -->
-                <ellipse cx="295" cy="236" rx="3.5" ry="2.2" fill="#1e293b"/>
-                <path d="M 291 240 Q 295 246 299 240" fill="#f43f5e"/>
+                <!-- Nose & Mouth -->
+                <ellipse cx="345" cy="236" rx="3.5" ry="2.2" fill="#1e293b"/>
+                <path d="M 341 240 Q 345 246 349 240" fill="#f43f5e"/>
             </g>
 
-            <!-- ================= BUTTERFLY (Flutters when ON) ================= -->
+            <!-- ================= BUTTERFLY (Shifted with Dog) ================= -->
             <g class="butterfly">
-                <ellipse cx="330" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(-30 330 205)"/>
-                <ellipse cx="342" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(30 342 205)"/>
-                <ellipse cx="331" cy="213" rx="5" ry="3" fill="#f43f5e" transform="rotate(20 331 213)"/>
-                <ellipse cx="341" cy="213" rx="5" ry="3" fill="#f43f5e" transform="rotate(-20 341 213)"/>
-                <line x1="336" y1="202" x2="336" y2="214" stroke="#1e293b" stroke-width="2"/>
-                <circle cx="336" cy="201" r="1.5" fill="#1e293b"/>
+                <ellipse cx="380" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(-30 380 205)"/>
+                <ellipse cx="392" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(30 392 205)"/>
+                <ellipse cx="381" cy="213" rx="5" ry="3" fill="#f43f5e" transform="rotate(20 381 213)"/>
+                <ellipse cx="391" cy="213" rx="5" ry="3" fill="#f43f5e" transform="rotate(-20 391 213)"/>
+                <line x1="386" y1="202" x2="386" y2="214" stroke="#1e293b" stroke-width="2"/>
+                <circle cx="386" cy="201" r="1.5" fill="#1e293b"/>
             </g>
         </svg>
     </div>
