@@ -3,154 +3,84 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Interactive Smart Home</title>
+    <title>Smart Home Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary-bg: #30acc9;
-            --accent-bus: #ffffff33;
-            --main-text: #ffffff;
-            --status-bg: rgba(255, 255, 255, 0.15);
-            --device-inactive: #f8fafc99;
-            --device-active: #ffffff;
-            --glow-active: 0 0 15px #e0f2fe99;
-        }
-
         body {
-            font-family: 'Poppins', 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #1b8fb0 0%, var(--primary-bg) 70%, #6cd2ea 100%);
-            color: var(--main-text);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
             margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            /* Sets your uploaded image as the exact background */
+            background: url('smart-home-bg.jpg') no-repeat center center fixed;
+            background-size: cover;
             overflow: hidden;
             touch-action: manipulation;
         }
 
-        /* --- UI Overlay (Statuses) --- */
+        /* Status Header at the top */
         .status-header {
-            position: absolute; top: 10px; width: 90%; max-width: 400px;
+            position: absolute; top: 15px; left: 50%; transform: translateX(-50%);
             display: flex; flex-direction: column; align-items: center;
-            background: var(--status-bg); border-radius: 12px;
-            padding: 8px; backdrop-filter: blur(5px); z-index: 900;
+            background: rgba(0, 0, 0, 0.4); border-radius: 12px;
+            padding: 8px 16px; backdrop-filter: blur(5px); z-index: 900;
+            color: white; border: 1px solid rgba(255,255,255,0.2);
         }
-        .main-title { font-size: 1.2rem; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
-        .status-text { font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; }
-        .dot { height: 8px; width: 8px; border-radius: 50%; margin-right: 6px; }
+        .main-title { font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .status-text { font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; margin-top: 2px; }
+        .dot { height: 7px; width: 7px; border-radius: 50%; margin-right: 6px; }
         .dot-green { background-color: #34d399; box-shadow: 0 0 8px #34d399; }
         .dot-red { background-color: #ef4444; }
 
-        /* --- Interactive Isometric Scene --- */
-        .iso-scene {
-            position: relative;
-            width: 100vw; height: 100vh;
+        /* Interactive Clickable Light Bulb positioned over the image */
+        .device-lamp {
+            position: absolute;
+            bottom: 25%; /* Adjust these percentages to match */
+            right: 28%;  /* the lightbulb location on your specific background image */
+            width: 50px; height: 50px;
+            background-color: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
             display: flex; justify-content: center; align-items: center;
-            overflow: hidden; perspective: 1000px;
-        }
-
-        .isometric-view {
-            width: 90%; max-width: 400px; /* Scaling base for phones */
-            position: relative;
-            transform: scale(0.9);
+            font-size: 1.5rem; cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: 0.3s ease;
             z-index: 10;
         }
 
-        /* The BUS Lines (Fake Vector Lines) */
-        .bus-line {
-            position: absolute; border-radius: 4px;
-            background: var(--accent-bus);
-            box-shadow: 0 0 5px var(--accent-bus);
-            z-index: 0;
-            transition: 0.3s ease;
+        .device-lamp:active { transform: scale(0.9); }
+        
+        /* When Light is ON, make it glow brightly */
+        .device-lamp.active {
+            background-color: #fef08a;
+            box-shadow: 0 0 25px #fde047, 0 0 40px #eab308;
+            border-color: #facc15;
         }
-
-        /* Specific positions for lines (responsive fake) */
-        #line-main { width: 100%; height: 50%; top: 25%; left: 0%; transform: skewY(15deg) skewX(-15deg); }
-        #line-to-lamp { width: 5%; height: 20%; bottom: 10%; right: 15%; }
-
-        /* Smart Devices (Interactive & Placeholder) */
-        .device {
-            position: absolute;
-            background-color: var(--device-inactive);
-            border-radius: 50%;
-            display: flex; justify-content: center; align-items: center;
-            font-size: 1.3rem; cursor: pointer;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-            z-index: 2; border: 2px solid #ffffff00;
-            transition: 0.3s ease, box-shadow 0.2s;
-        }
-
-        .device:active { transform: scale(0.95); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .device.active {
-            background-color: var(--device-active);
-            box-shadow: var(--glow-active);
-            border-color: #ffffff;
-            color: rgba(0,0,0,0.8);
-        }
-
-        /* House Placeholder (central base) */
-        .house-base {
-            width: 100%; height: auto;
-            position: absolute; top: 50%; left: 50%;
-            transform: translate(-50%, -50%);
-            background: var(--accent-bus);
-            border-radius: 20px;
-            z-index: 1;
-        }
-
-        /* --- Responsive Positions for Isometric Scene --- */
-        .device.lamp     { bottom: 15%; right: 10%; } /* ESP32 Lamp Control */
-        .device.smart-tv { top: 5%; left: 32%; }
-        .device.ac       { top: 15%; right: 0; }
-        .device.lock     { bottom: -5%; left: 40%; }
-        /* Add other device positions similarly */
-
-        /* Prevent zooming on interaction */
-        * { touch-action: manipulation; }
-
     </style>
 </head>
 <body>
+
     <!-- Status UI -->
     <div class="status-header">
-        <span class="main-title">SMART HOME</span>
-        <div id="status" class="status-text"><div class="dot dot-red"></div>CONNECTING</div>
+        <span class="main-title">Smart Home Control</span>
+        <div id="status" class="status-text"><div class="dot dot-red"></div>Connecting...</div>
     </div>
 
-    <!-- Isometric Interactive Scene -->
-    <div class="iso-scene">
-        <div class="isometric-view">
-            <!-- Central House Base -->
-            <div class="house-base">
-                <img src="https://static.thenounproject.com/png/5136979-200.png" alt="House Isometric" style="width: 100%; opacity: 0.5; padding: 20px; box-sizing: border-box;">
-            </div>
-
-            <!-- FAKE BUS LINES (CSS Placeholder) -->
-            <div id="line-main" class="bus-line"></div>
-            <div id="line-to-lamp" class="bus-line"></div>
-
-            <!-- SMART DEVICES -->
-            <div id="device-smart-tv" class="device smart-tv">📺</div>
-            <div id="device-ac" class="device ac">❄️</div>
-            <!-- YOUR ESP32 CONTROL IS NOW THIS LAMP ICON -->
-            <div id="device-lamp" class="device lamp active" onclick="toggleLamp()">💡</div>
-            <div id="device-lock" class="device lock">🔒</div>
-        </div>
-    </div>
+    <!-- Interactive ESP32 Lamp Button placed directly on the graphic -->
+    <div id="device-lamp" class="device-lamp" onclick="toggleLamp()" title="Click to toggle lamp">💡</div>
 
     <script>
-        const client = new Paho.MQTT.Client("broker.emqx.io", 8084, "/mqtt", "web_iso_" + parseInt(Math.random() * 100000));
+        const client = new Paho.MQTT.Client("broker.emqx.io", 8084, "/mqtt", "web_cartoon_" + parseInt(Math.random() * 100000));
         let lampState = "OFF";
 
         const statusEl = document.getElementById("status");
         const lampEl = document.getElementById("device-lamp");
 
         client.onConnectionLost = function(responseObject) {
-            statusEl.innerHTML = '<div class="dot dot-red"></div>DISCONNECTED';
-            lampEl.classList.remove('active'); // Assume dim on disconnect
+            statusEl.innerHTML = '<div class="dot dot-red"></div>Disconnected';
+            lampEl.classList.remove('active');
         };
 
         client.onMessageArrived = function(message) {
@@ -162,11 +92,11 @@
             useSSL: true,
             timeout: 5,
             onSuccess: function() {
-                statusEl.innerHTML = '<div class="dot dot-green"></div>CONNECTED';
+                statusEl.innerHTML = '<div class="dot dot-green"></div>Connected Online';
                 client.subscribe("samnang/smarthome/led/status");
             },
             onFailure: function(err) {
-                statusEl.innerHTML = '<div class="dot dot-red"></div>FAILED';
+                statusEl.innerHTML = '<div class="dot dot-red"></div>Connection Failed';
             }
         });
 
@@ -184,11 +114,6 @@
                 lampEl.classList.remove('active');
             }
         }
-
-        // Set initial state for unconnected placeholder devices
-        ['device-smart-tv', 'device-ac', 'device-lock'].forEach(id => {
-            document.getElementById(id).classList.remove('active');
-        });
     </script>
 </body>
 </html>
