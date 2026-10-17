@@ -60,7 +60,7 @@
         .house-container {
             position: relative;
             width: 85%;
-            max-width: 400px;
+            max-width: 420px;
             cursor: pointer;
             transition: transform 0.2s ease;
         }
@@ -84,21 +84,35 @@
         .house-on .roof { fill: #475569; }
         .house-on .glow-effect { opacity: 1; }
 
-        /* --- Cartoon Cat Animation --- */
-        .cat-tail {
-            transform-origin: 325px 275px;
-            transition: 0.4s ease;
-        }
-        .cat-ears {
+        /* --- Dog Tail Wag & Butterfly Flight Animation --- */
+        .dog-tail {
+            transform-origin: 300px 270px;
             transition: 0.3s ease;
         }
-        /* When house is ON, cat wags its tail happily */
-        .house-on .cat-tail {
-            animation: catTailWag 0.8s infinite alternate ease-in-out;
+        .house-on .dog-tail {
+            animation: dogTailWag 0.5s infinite alternate ease-in-out;
         }
-        @keyframes catTailWag {
+        @keyframes dogTailWag {
             0% { transform: rotate(0deg); }
-            100% { transform: rotate(-25deg); }
+            100% { transform: rotate(25deg); }
+        }
+
+        /* Butterfly flying around when ON */
+        .butterfly {
+            opacity: 0;
+            transform: translate(0, 0);
+            transition: opacity 0.5s ease;
+        }
+        .house-on .butterfly {
+            opacity: 1;
+            animation: flyAround 3s infinite ease-in-out;
+        }
+        @keyframes flyAround {
+            0% { transform: translate(0px, 0px) scale(1); }
+            25% { transform: translate(15px, -20px) scale(1.1); }
+            50% { transform: translate(35px, -5px) scale(0.9); }
+            75% { transform: translate(20px, 10px) scale(1.05); }
+            100% { transform: translate(0px, 0px) scale(1); }
         }
 
         /* Hint Text at Bottom */
@@ -140,9 +154,9 @@
         <div class="card-value" id="weatherDisplay">--°C</div>
     </div>
 
-    <!-- Center Interactive Cartoon House with Animated Cat -->
+    <!-- Center Interactive Cartoon House with Puppy & Butterfly -->
     <div class="house-container" id="houseCard" onclick="toggleLight()">
-        <svg id="houseSvg" viewBox="0 0 420 350" xmlns="http://www.w3.org/2000/svg">
+        <svg id="houseSvg" viewBox="0 0 440 350" xmlns="http://www.w3.org/2000/svg">
             <circle class="glow-effect" cx="190" cy="180" r="140" fill="#fef08a" opacity="0.4" filter="blur(30px)"/>
             
             <!-- House Structure -->
@@ -163,36 +177,42 @@
             <rect class="window-pane" x="251" y="176" width="16" height="16" rx="2"/>
             <rect x="260" y="70" width="25" height="45" rx="3" fill="#94a3b8"/>
 
-            <!-- CARTOON CAT (Sitting outside on the right) -->
-            <g class="cartoon-cat">
+            <!-- CARTOON PUPPY (Sitting on the right, matching your uploaded reference style) -->
+            <g class="cartoon-dog">
                 <!-- Tail -->
-                <path class="cat-tail" d="M 325 275 Q 350 260 345 235" stroke="#f97316" stroke-width="6" stroke-linecap="round" fill="none"/>
-                <!-- Paws -->
-                <ellipse cx="308" cy="295" rx="5" ry="3" fill="#f97316"/>
-                <ellipse cx="322" cy="295" rx="5" ry="3" fill="#f97316"/>
+                <path class="dog-tail" d="M 300 275 Q 315 260 310 245" stroke="#f59e0b" stroke-width="6" stroke-linecap="round" fill="none"/>
                 <!-- Body -->
-                <ellipse cx="315" cy="270" rx="16" ry="24" fill="#fb923c"/>
-                <ellipse cx="315" cy="272" rx="10" ry="16" fill="#ffedd5"/>
+                <ellipse cx="290" cy="270" rx="15" ry="22" fill="#f59e0b"/>
+                <path d="M 280 260 Q 290 285 300 260" fill="#fffbeb"/>
+                <!-- Collar -->
+                <path d="M 278 245 Q 290 250 302 245" stroke="#451a03" stroke-width="4" fill="none"/>
                 <!-- Head -->
-                <circle cx="315" cy="235" r="18" fill="#fb923c"/>
-                <!-- Ears -->
-                <polygon class="cat-ears" points="300,225 305,205 313,220" fill="#f97316"/>
-                <polygon class="cat-ears" points="302,223 306,209 311,220" fill="#fdba74"/>
-                <polygon class="cat-ears" points="330,225 325,205 317,220" fill="#f97316"/>
-                <polygon class="cat-ears" points="328,223 324,209 319,220" fill="#fdba74"/>
+                <circle cx="290" cy="232" r="16" fill="#f59e0b"/>
+                <!-- Cute White Patch on Head -->
+                <path d="M 290 216 Q 295 225 290 232 Q 285 225 290 216" fill="#fffbeb"/>
+                <!-- Floppy Ears -->
+                <ellipse cx="272" cy="235" rx="7" ry="12" fill="#d97706" transform="rotate(-15 272 235)"/>
+                <ellipse cx="308" cy="235" rx="7" ry="12" fill="#d97706" transform="rotate(15 308 235)"/>
                 <!-- Eyes -->
-                <circle cx="309" cy="233" r="3.5" fill="#0284c7"/>
-                <circle cx="308" cy="232" r="1" fill="#fff"/>
-                <circle cx="321" cy="233" r="3.5" fill="#0284c7"/>
-                <circle cx="320" cy="232" r="1" fill="#fff"/>
-                <!-- Nose & Mouth -->
-                <polygon points="313,238 317,238 315,240" fill="#f43f5e"/>
-                <path d="M 312 242 Q 315 245 315 242 Q 315 245 318 242" stroke="#7c2d12" stroke-width="1.2" fill="none"/>
-                <!-- Whiskers -->
-                <line x1="298" y1="237" x2="290" y2="235" stroke="#7c2d12" stroke-width="1"/>
-                <line x1="298" y1="240" x2="288" y2="241" stroke="#7c2d12" stroke-width="1"/>
-                <line x1="332" y1="237" x2="340" y2="235" stroke="#7c2d12" stroke-width="1"/>
-                <line x1="332" y1="240" x2="342" y2="241" stroke="#7c2d12" stroke-width="1"/>
+                <circle cx="284" cy="230" r="3.5" fill="#1e293b"/>
+                <circle cx="283" cy="229" r="1.2" fill="#fff"/>
+                <circle cx="296" cy="230" r="3.5" fill="#1e293b"/>
+                <circle cx="295" cy="229" r="1.2" fill="#fff"/>
+                <!-- Nose & Happy Mouth -->
+                <ellipse cx="290" cy="237" rx="3" ry="2" fill="#1e293b"/>
+                <path d="M 287 240 Q 290 244 293 240" stroke="#1e293b" stroke-width="1.5" fill="none"/>
+            </g>
+
+            <!-- BUTTERFLY (Playing with the puppy when house is ON) -->
+            <g class="butterfly">
+                <!-- Wings -->
+                <ellipse cx="325" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(-30 325 205)"/>
+                <ellipse cx="337" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(30 337 205)"/>
+                <ellipse cx="326" cy="213" rx="5" ry="3" fill="#f43f5e" transform="rotate(20 326 213)"/>
+                <ellipse cx="336" cy="213" rx="5" ry="3" fill="#f43f5e" transform="rotate(-20 336 213)"/>
+                <!-- Body -->
+                <line x1="331" y1="202" x2="331" y2="214" stroke="#1e293b" stroke-width="2"/>
+                <circle cx="331" cy="201" r="1.5" fill="#1e293b"/>
             </g>
         </svg>
     </div>
