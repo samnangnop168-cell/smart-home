@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Smart Home Cartoon Dashboard</title>
+    <title>Smart Home Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -22,42 +22,57 @@
             touch-action: manipulation;
         }
 
-        /* Status & Info Header */
-        .status-header {
+        /* Top Title & Cloud Status */
+        .top-header {
             position: absolute; top: 15px;
             display: flex; flex-direction: column; align-items: center;
-            background: rgba(0, 0, 0, 0.35); border-radius: 16px;
-            padding: 10px 20px; backdrop-filter: blur(6px); z-index: 100;
-            color: white; border: 1px solid rgba(255,255,255,0.2);
-            text-align: center;
-            min-width: 240px;
+            background: rgba(0, 0, 0, 0.3); padding: 6px 16px;
+            border-radius: 12px; backdrop-filter: blur(5px); color: white;
+            border: 1px solid rgba(255,255,255,0.2); z-index: 100;
         }
-        .main-title { font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        .datetime-info { font-size: 0.8rem; font-weight: 500; opacity: 0.9; margin: 2px 0; }
-        .weather-info { font-size: 0.85rem; font-weight: 600; color: #fde047; margin-bottom: 4px; }
-        .status-text { font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; }
-        .dot { height: 7px; width: 7px; border-radius: 50%; margin-right: 6px; }
-        .dot-green { background-color: #34d399; box-shadow: 0 0 8px #34d399; }
+        .main-title { font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .status-text { font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; margin-top: 2px; }
+        .dot { height: 6px; width: 6px; border-radius: 50%; margin-right: 5px; }
+        .dot-green { background-color: #34d399; box-shadow: 0 0 6px #34d399; }
         .dot-red { background-color: #ef4444; }
 
-        /* Cartoon House Container */
+        /* Left and Right Side Cards */
+        .side-card {
+            position: absolute;
+            top: 50%; transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.35);
+            padding: 12px 16px;
+            border-radius: 14px;
+            backdrop-filter: blur(6px);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.2);
+            text-align: center;
+            z-index: 90;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+        }
+        .left-card { left: 20px; }
+        .right-card { right: 20px; }
+
+        .card-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; }
+        .card-value { font-size: 1rem; font-weight: 700; margin-top: 4px; color: #fde047; }
+
+        /* Cartoon House Container (Center) */
         .house-container {
             position: relative;
-            width: 90%;
-            max-width: 420px;
+            width: 80%;
+            max-width: 360px;
             cursor: pointer;
             transition: transform 0.2s ease;
         }
         .house-container:active { transform: scale(0.97); }
 
-        /* SVG Styling & Dynamic Lighting States */
+        /* SVG Cartoon House Animation */
         svg {
             width: 100%;
             height: auto;
-            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.2));
+            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.25));
         }
 
-        /* OFF State (Default Darker/Dim House) */
         .window-pane { fill: #475569; transition: 0.4s ease; }
         .house-body { fill: #f3f4f6; transition: 0.4s ease; }
         .roof { fill: #334155; transition: 0.4s ease; }
@@ -69,30 +84,46 @@
         .house-on .roof { fill: #475569; }
         .house-on .glow-effect { opacity: 1; }
 
-        /* Instruction text below house */
+        /* Hint Text at Bottom */
         .hint-text {
-            margin-top: 20px;
-            color: white;
-            font-weight: 600;
-            font-size: 0.95rem;
-            background: rgba(0,0,0,0.2);
-            padding: 8px 16px;
-            border-radius: 20px;
-            backdrop-filter: blur(4px);
+            position: absolute; bottom: 20px;
+            color: white; font-weight: 600; font-size: 0.9rem;
+            background: rgba(0,0,0,0.3); padding: 8px 18px;
+            border-radius: 20px; backdrop-filter: blur(4px);
+        }
+
+        /* Responsive adjustments for phones in portrait mode */
+        @media (max-width: 600px) {
+            .side-card { top: auto; bottom: 75px; transform: none; padding: 8px 12px; }
+            .left-card { left: 15px; }
+            .right-card { right: 15px; }
+            .card-value { font-size: 0.85rem; }
+            .card-label { font-size: 0.65rem; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Status & Weather Header -->
-    <div class="status-header">
+    <!-- Top Header -->
+    <div class="top-header">
         <span class="main-title">Smart Home Control</span>
-        <div class="datetime-info" id="datetimeDisplay">Loading Date & Time...</div>
-        <div class="weather-info" id="weatherDisplay">🌤️ Loading Weather...</div>
-        <div id="status" class="status-text"><div class="dot dot-red"></div>Connecting Cloud...</div>
+        <div id="status" class="status-text"><div class="dot dot-red"></div>Connecting...</div>
     </div>
 
-    <!-- Interactive Cartoon House -->
+    <!-- Left Card: Clock & Date -->
+    <div class="side-card left-card">
+        <div class="card-label">📅 Date & Time</div>
+        <div class="card-value" id="dateDisplay">Loading...</div>
+        <div class="card-value" id="timeDisplay" style="font-size: 1.1rem; color: #ffffff;">--:--:--</div>
+    </div>
+
+    <!-- Right Card: Temperature -->
+    <div class="side-card right-card">
+        <div class="card-label">🌡️ Temperature</div>
+        <div class="card-value" id="weatherDisplay">--°C</div>
+    </div>
+
+    <!-- Center Interactive Cartoon House -->
     <div class="house-container" id="houseCard" onclick="toggleLight()">
         <svg id="houseSvg" viewBox="0 0 400 350" xmlns="http://www.w3.org/2000/svg">
             <circle class="glow-effect" cx="200" cy="180" r="140" fill="#fef08a" opacity="0.4" filter="blur(30px)"/>
@@ -121,31 +152,28 @@
         // --- Live Clock & Date Script ---
         function updateDateTime() {
             const now = new Date();
-            const options = { weekday: 'short', month: 'short', day: 'numeric' };
-            const dateStr = now.toLocaleDateString('en-US', options);
+            const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
             const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-            document.getElementById("datetimeDisplay").innerText = `${dateStr} | ${timeStr}`;
+            document.getElementById("dateDisplay").innerText = dateStr;
+            document.getElementById("timeDisplay").innerText = timeStr;
         }
         setInterval(updateDateTime, 1000);
         updateDateTime();
 
-        // --- Live Weather Fetcher (Auto Geolocation) ---
+        // --- Live Weather Fetcher ---
         async function fetchWeather() {
             try {
-                // Get user's coordinates automatically
                 navigator.geolocation.getCurrentPosition(async (position) => {
                     const lat = position.coords.latitude;
                     const lon = position.coords.longitude;
                     const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
                     const data = await res.json();
-                    const temp = data.current_weather.temperature;
-                    document.getElementById("weatherDisplay").innerText = `🌡️ Local Weather: ${temp}°C`;
+                    document.getElementById("weatherDisplay").innerText = `${data.current_weather.temperature}°C`;
                 }, () => {
-                    // Fallback default if location is blocked
-                    document.getElementById("weatherDisplay").innerText = `🌡️ Weather: 28°C`;
+                    document.getElementById("weatherDisplay").innerText = "28°C";
                 });
             } catch (e) {
-                document.getElementById("weatherDisplay").innerText = `🌡️ Weather Available`;
+                document.getElementById("weatherDisplay").innerText = "28°C";
             }
         }
         fetchWeather();
