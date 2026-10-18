@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Smart Home Dashboard with Voice</title> 
+    <title>Smart Home Cyber HUD</title> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700&family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
             margin: 0; padding: 0;
@@ -17,39 +17,49 @@
             overflow: hidden; touch-action: manipulation;
         }
 
+        /* Modern High-Tech Cyber Header */
         .top-header {
-            position: absolute; top: 15px;
+            position: absolute; top: 18px;
             display: flex; flex-direction: column; align-items: center;
-            background: rgba(0, 0, 0, 0.3); padding: 6px 16px;
-            border-radius: 12px; backdrop-filter: blur(5px); color: white;
-            border: 1px solid rgba(255,255,255,0.2); z-index: 100;
+            background: rgba(15, 23, 42, 0.75); padding: 8px 22px;
+            border-radius: 14px; backdrop-filter: blur(10px); color: white;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.35); z-index: 100;
         }
-        .main-title { font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        .status-text { font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; margin-top: 2px; }
-        .dot { height: 6px; width: 6px; border-radius: 50%; margin-right: 5px; }
-        .dot-green { background-color: #34d399; box-shadow: 0 0 6px #34d399; }
-        .dot-red { background-color: #ef4444; }
+        .main-title { 
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
+            background: linear-gradient(90deg, #38bdf8, #fde047);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .status-text { font-size: 0.7rem; font-weight: 600; display: flex; align-items: center; margin-top: 3px; color: #cbd5e1; }
+        .dot { height: 7px; width: 7px; border-radius: 50%; margin-right: 6px; }
+        .dot-green { background-color: #34d399; box-shadow: 0 0 8px #34d399; }
+        .dot-red { background-color: #ef4444; box-shadow: 0 0 8px #ef4444; }
 
+        /* Modern High-Tech Side HUD Cards */
         .side-card {
             position: absolute; top: 50%; transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.35); padding: 12px 16px;
-            border-radius: 14px; backdrop-filter: blur(6px); color: white;
-            border: 1px solid rgba(255,255,255,0.2); text-align: center; z-index: 90;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            background: rgba(15, 23, 42, 0.7); padding: 14px 18px;
+            border-radius: 16px; backdrop-filter: blur(10px); color: white;
+            border: 1px solid rgba(56, 189, 248, 0.3); text-align: center; z-index: 90;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            min-width: 135px;
         }
-        .left-card { left: 20px; }
-        .right-card { right: 20px; }
+        .left-card { left: 25px; }
+        .right-card { right: 25px; }
 
-        .card-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; }
-        .card-value { font-size: 1rem; font-weight: 700; margin-top: 4px; color: #fde047; }
+        .card-label { font-size: 0.68rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
+        .card-value { font-family: 'Orbitron', sans-serif; font-size: 0.95rem; font-weight: 700; margin-top: 5px; color: #fde047; }
 
+        /* House Container */
         .house-container {
             position: relative; width: 85%; max-width: 480px;
             cursor: pointer; transition: transform 0.2s ease;
         }
         .house-container:active { transform: scale(0.97); }
 
-        svg { width: 100%; height: auto; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.25)); }
+        svg { width: 100%; height: auto; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.4)); }
 
         .window-pane { fill: #475569; transition: 0.4s ease; }
         .house-body { fill: #f3f4f6; transition: 0.4s ease; }
@@ -88,28 +98,37 @@
             100% { transform: translate(0px, 0px) scale(1); }
         }
 
+        /* Modern Tech Hint Footer */
         .hint-text {
-            position: absolute; bottom: 20px;
-            color: white; font-weight: 700; font-size: 0.95rem;
-            background: rgba(0,0,0,0.4); padding: 10px 22px;
-            border-radius: 20px; backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.2); text-align: center;
+            position: absolute; bottom: 22px;
+            color: white; font-weight: 600; font-size: 0.88rem;
+            background: rgba(15, 23, 42, 0.75); padding: 10px 24px;
+            border-radius: 24px; backdrop-filter: blur(10px);
+            border: 1px solid rgba(56, 189, 248, 0.4); text-align: center;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
         }
 
+        /* High-Tech Glow Voice Button */
         .voice-btn {
-            position: absolute; bottom: 75px;
-            background: #fde047; color: #1e293b; border: none;
-            padding: 8px 16px; border-radius: 15px; font-weight: 700;
-            font-size: 0.8rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            position: absolute; bottom: 78px;
+            background: linear-gradient(135deg, #38bdf8 0%, #2563eb 100%); 
+            color: #ffffff; border: none;
+            padding: 10px 22px; border-radius: 20px; font-weight: 700;
+            font-size: 0.8rem; cursor: pointer; letter-spacing: 0.5px;
+            box-shadow: 0 6px 20px rgba(56, 189, 248, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            transition: all 0.2s ease;
         }
+        .voice-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(56, 189, 248, 0.6); }
         .voice-btn:active { transform: scale(0.95); }
 
         @media (max-width: 600px) {
-            .side-card { top: auto; bottom: 110px; transform: none; padding: 8px 12px; }
+            .side-card { top: auto; bottom: 120px; transform: none; padding: 8px 12px; min-width: 110px; }
             .left-card { left: 15px; }
             .right-card { right: 15px; }
-            .card-value { font-size: 0.85rem; }
-            .card-label { font-size: 0.65rem; }
+            .card-value { font-size: 0.82rem; }
+            .card-label { font-size: 0.58rem; }
+            .voice-btn { bottom: 72px; padding: 8px 16px; }
         }
     </style>
 </head>
@@ -117,7 +136,7 @@
 
     <!-- Top Header -->
     <div class="top-header">
-        <span class="main-title">Smart Home Control</span>
+        <span class="main-title">CYBER HUD CONTROL</span>
         <div id="status" class="status-text"><div class="dot dot-red"></div>Connecting...</div>
     </div>
 
@@ -125,7 +144,7 @@
     <div class="side-card left-card">
         <div class="card-label">📅 Date & Time</div>
         <div class="card-value" id="dateDisplay">Loading...</div>
-        <div class="card-value" id="timeDisplay" style="font-size: 1.1rem; color: #ffffff;">--:--:--</div>
+        <div class="card-value" id="timeDisplay" style="font-size: 0.95rem; color: #ffffff; margin-top: 3px;">--:--:--</div>
     </div>
 
     <!-- Right Card: Temperature -->
@@ -134,7 +153,7 @@
         <div class="card-value" id="weatherDisplay">--°C</div>
     </div>
 
-    <!-- Center Interactive Cartoon House -->
+    <!-- Center Interactive Cartoon House & Original Dog -->
     <div class="house-container" id="houseCard" onclick="toggleLight()">
         <svg id="houseSvg" viewBox="0 0 490 350" xmlns="http://www.w3.org/2000/svg">
             <circle class="glow-effect" cx="190" cy="180" r="140" fill="#fef08a" opacity="0.4" filter="blur(30px)"/>
@@ -156,7 +175,7 @@
             <rect class="window-pane" x="251" y="176" width="16" height="16" rx="2"/>
             <rect x="260" y="70" width="25" height="45" rx="3" fill="#94a3b8"/>
 
-            <!-- SLEEPING PUPPY -->
+            <!-- SLEEPING PUPPY (Original) -->
             <g class="sleeping-dog">
                 <ellipse cx="365" cy="280" rx="24" ry="16" fill="#ffffff"/>
                 <ellipse cx="372" cy="275" rx="14" ry="10" fill="#b45309"/>
@@ -168,7 +187,7 @@
                 <text x="342" y="238" fill="#ffffff" font-size="12" font-weight="bold" class="sleep-z" style="animation-delay: 0.7s;">z</text>
             </g>
 
-            <!-- AWAKE PUPPY -->
+            <!-- AWAKE PUPPY (Original) -->
             <g class="awake-dog">
                 <path class="dog-tail" d="M 360 275 Q 375 260 370 245" stroke="#78350f" stroke-width="6" stroke-linecap="round" fill="none"/>
                 <ellipse cx="345" cy="270" rx="16" ry="22" fill="#ffffff"/>
@@ -186,7 +205,7 @@
                 <path d="M 341 240 Q 345 246 349 240" fill="#f43f5e"/>
             </g>
 
-            <!-- BUTTERFLY -->
+            <!-- BUTTERFLY (Original) -->
             <g class="butterfly">
                 <ellipse cx="380" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(-30 380 205)"/>
                 <ellipse cx="392" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(30 392 205)"/>
