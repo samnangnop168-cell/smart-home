@@ -214,7 +214,7 @@
             }
         }
 
-        // --- Speech Recognition (Voice Commands) ---
+        // --- Speech Recognition (Voice Commands & Questions) ---
         let recognition;
         let waitingForConfirmation = false;
 
@@ -230,14 +230,28 @@
                     let speechWord = event.results[0][0].transcript.toLowerCase().trim();
                     console.log("Heard speech: " + speechWord);
                     
+                    // Handle Light ON Command
                     if (speechWord.includes("light on") || speechWord.includes("turn on")) {
                         waitingForConfirmation = true;
                         sendMQTTCommand("ON");
-                    } else if (speechWord.includes("light off") || speechWord.includes("turn off")) {
+                    } 
+                    // Handle Light OFF Command
+                    else if (speechWord.includes("light off") || speechWord.includes("turn off")) {
                         waitingForConfirmation = true;
                         sendMQTTCommand("OFF");
-                    } else {
-                        speak("Command not recognized. Say light on or light off.");
+                    } 
+                    // Handle Status Inquiry Questions ("is the light on?", "status", "light status")
+                    else if (speechWord.includes("status") || speechWord.includes("is the light") || speechWord.includes("light condition")) {
+                        if (lightState === "ON") {
+                            speak("The light is currently turned on.");
+                        } else if (lightState === "OFF") {
+                            speak("The light is currently turned off.");
+                        } else {
+                            speak("Status is currently unknown.");
+                        }
+                    } 
+                    else {
+                        speak("Command not recognized. Say light on, light off, or check status.");
                     }
                 };
 
@@ -305,11 +319,10 @@
         };
 
         client.onMessageArrived = function(message) {
-            let previousState = lightState;
             lightState = message.payloadString;
             updateUI();
 
-            // Initial open status check
+            // Initial open status report
             if (!hasSpokenInitialStatus) {
                 hasSpokenInitialStatus = true;
                 if (lightState === "ON") {
