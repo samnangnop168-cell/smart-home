@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Smart Home Dashboard</title> 
+    <title>Smart Home Dashboard with Voice</title> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -93,11 +93,19 @@
             color: white; font-weight: 700; font-size: 0.95rem;
             background: rgba(0,0,0,0.4); padding: 10px 22px;
             border-radius: 20px; backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.2); text-align: center;
         }
 
+        .voice-btn {
+            position: absolute; bottom: 75px;
+            background: #fde047; color: #1e293b; border: none;
+            padding: 8px 16px; border-radius: 15px; font-weight: 700;
+            font-size: 0.8rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .voice-btn:active { transform: scale(0.95); }
+
         @media (max-width: 600px) {
-            .side-card { top: auto; bottom: 75px; transform: none; padding: 8px 12px; }
+            .side-card { top: auto; bottom: 110px; transform: none; padding: 8px 12px; }
             .left-card { left: 15px; }
             .right-card { right: 15px; }
             .card-value { font-size: 0.85rem; }
@@ -190,10 +198,66 @@
         </svg>
     </div>
 
-    <!-- Status text display -->
+    <!-- Voice Control Button & Status -->
+    <button class="voice-btn" onclick="startListening()">🎤 Tap to Speak</button>
     <div class="hint-text" id="hintText">Actual LED: Syncing...</div>
 
     <script>
+        // --- Text-to-Speech Voice Report Function ---
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel(); // Stop any ongoing speech
+                let utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        // --- Speech Recognition (Voice Commands) ---
+        let recognition;
+        function initVoiceRecognition() {
+            window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (window.SpeechRecognition) {
+                recognition = new SpeechRecognition();
+                recognition.continuous = false;
+                recognition.interimResults = false;
+                recognition.lang = 'en-US';
+
+                recognition.onresult = function(event) {
+                    let speechWord = event.results[0][0].transcript.toLowerCase().trim();
+                    console.log("Heard speech: " + speechWord);
+                    
+                    if (speechWord.includes("light on") || speechWord.includes("turn on")) {
+                        sendMQTTCommand("ON");
+                        speak("Turning light on");
+                    } else if (speechWord.includes("light off") || speechWord.includes("turn off")) {
+                        sendMQTTCommand("OFF");
+                        speak("Turning light off");
+                    } else {
+                        speak("Command not recognized. Say light on or light off.");
+                    }
+                };
+
+                recognition.onerror = function(event) {
+                    console.log("Speech recognition error", event.error);
+                };
+            }
+        }
+
+        function startListening() {
+            if (recognition) {
+                try {
+                    recognition.start();
+                    speak("Listening");
+                } catch(e) { console.log(e); }
+            } else {
+                alert("Speech recognition is not supported in this browser. Try Google Chrome.");
+            }
+        }
+
+        initVoiceRecognition();
+
         // --- Live Clock & Date Script ---
         function updateDateTime() {
             const now = new Date();
@@ -226,6 +290,7 @@
         // --- MQTT Cloud Connection ---
         const client = new Paho.MQTT.Client("broker.emqx.io", 8084, "/mqtt", "web_cartoon_" + parseInt(Math.random() * 100000));
         let lightState = "UNKNOWN";
+        let hasSpokenInitialStatus = false; // Flag to ensure initial voice report triggers once
 
         const statusEl = document.getElementById("status");
         const houseCard = document.getElementById("houseCard");
@@ -234,11 +299,22 @@
         client.onConnectionLost = function(responseObject) {
             statusEl.innerHTML = '<div class="dot dot-red"></div>Disconnected';
             hintText.innerText = "Actual LED: Disconnected 🔴";
+            speak("System disconnected from cloud network.");
         };
 
         client.onMessageArrived = function(message) {
             lightState = message.payloadString;
             updateUI();
+
+            // Speak condition on initial load/sync response
+            if (!hasSpokenInitialStatus) {
+                hasSpokenInitialStatus = true;
+                if (lightState === "ON") {
+                    speak("System connected online. Light is currently turned on.");
+                } else {
+                    speak("System connected online. Light is currently turned off.");
+                }
+            }
         };
 
         client.connect({
@@ -247,8 +323,8 @@
             onSuccess: function() {
                 statusEl.innerHTML = '<div class="dot dot-green"></div>Connected Online';
                 client.subscribe("samnang/smarthome/led/status");
-                
-                // ASK ESP32 FOR REAL STATUS IMMEDIATELY WHEN WEBPAGE OPENS!
+
+                // Ask ESP32 for current physical state immediately
                 let reqMsg = new Paho.MQTT.Message("GET");
                 reqMsg.destinationName = "samnang/smarthome/led/get";
                 client.send(reqMsg);
@@ -256,12 +332,17 @@
             onFailure: function(err) {
                 statusEl.innerHTML = '<div class="dot dot-red"></div>Connection Failed';
                 hintText.innerText = "Actual LED: Offline ❌";
+                speak("Connection failed. Please check network connection.");
             }
         });
 
         function toggleLight() {
             let nextState = (lightState === "ON") ? "OFF" : "ON";
-            let msg = new Paho.MQTT.Message(nextState);
+            sendMQTTCommand(nextState);
+        }
+
+        function sendMQTTCommand(state) {
+            let msg = new Paho.MQTT.Message(state);
             msg.destinationName = "samnang/smarthome/led";
             client.send(msg);
         }
