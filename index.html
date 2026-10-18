@@ -3,232 +3,301 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Smart Home Dashboard with HD Pets</title> 
+    <title>Next-Gen Smart Home HUD</title> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
+        * { box-sizing: border-box; }
         body {
             margin: 0; padding: 0;
             width: 100vw; height: 100vh;
             font-family: 'Poppins', sans-serif;
-            background: linear-gradient(135deg, #1b8fb0 0%, #30acc9 70%, #6cd2ea 100%);
+            background: #090d16;
+            color: #ffffff;
             display: flex; flex-direction: column;
             justify-content: center; align-items: center;
             overflow: hidden; touch-action: manipulation;
         }
 
-        .top-header {
-            position: absolute; top: 15px;
-            display: flex; flex-direction: column; align-items: center;
-            background: rgba(0, 0, 0, 0.3); padding: 6px 16px;
-            border-radius: 12px; backdrop-filter: blur(5px); color: white;
-            border: 1px solid rgba(255,255,255,0.2); z-index: 100;
+        /* Dynamic Animated Background Grid & Glow */
+        #bgCanvas {
+            position: absolute; top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 1; pointer-events: none;
         }
-        .main-title { font-size: 0.95rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
-        .status-text { font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; margin-top: 2px; }
-        .dot { height: 6px; width: 6px; border-radius: 50%; margin-right: 5px; }
-        .dot-green { background-color: #34d399; box-shadow: 0 0 6px #34d399; }
-        .dot-red { background-color: #ef4444; }
 
+        .bg-glow {
+            position: absolute; width: 600px; height: 600px;
+            background: radial-gradient(circle, rgba(14, 165, 233, 0.15) 0%, rgba(0,0,0,0) 70%);
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 2; pointer-events: none; transition: background 0.8s ease;
+        }
+
+        body.light-active .bg-glow {
+            background: radial-gradient(circle, rgba(250, 204, 21, 0.2) 0%, rgba(0,0,0,0) 70%);
+        }
+
+        /* Header Bar */
+        .top-header {
+            position: absolute; top: 20px; z-index: 100;
+            display: flex; flex-direction: column; align-items: center;
+            background: rgba(15, 23, 42, 0.65); padding: 8px 24px;
+            border-radius: 16px; backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .main-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 0.9rem; font-weight: 700;
+            letter-spacing: 2px; text-transform: uppercase;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+        }
+        .status-text {
+            font-size: 0.75rem; font-weight: 600;
+            display: flex; align-items: center; margin-top: 3px; color: #94a3b8;
+        }
+        .dot { height: 8px; width: 8px; border-radius: 50%; margin-right: 6px; }
+        .dot-green { background-color: #10b981; box-shadow: 0 0 10px #10b981; }
+        .dot-red { background-color: #ef4444; box-shadow: 0 0 10px #ef4444; }
+
+        /* Side HUD Widgets */
         .side-card {
             position: absolute; top: 50%; transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.35); padding: 12px 16px;
-            border-radius: 14px; backdrop-filter: blur(6px); color: white;
-            border: 1px solid rgba(255,255,255,0.2); text-align: center; z-index: 90;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            background: rgba(15, 23, 42, 0.6); padding: 16px 20px;
+            border-radius: 18px; backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1); text-align: center; z-index: 90;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+            min-width: 140px;
         }
-        .left-card { left: 20px; }
-        .right-card { right: 20px; }
+        .left-card { left: 30px; }
+        .right-card { right: 30px; }
 
-        .card-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; }
-        .card-value { font-size: 1rem; font-weight: 700; margin-top: 4px; color: #fde047; }
+        .card-label {
+            font-size: 0.7rem; font-weight: 600;
+            text-transform: uppercase; letter-spacing: 1px; color: #64748b;
+        }
+        .card-value {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 1.05rem; font-weight: 700; margin-top: 6px; color: #38bdf8;
+        }
 
+        /* Center Isometric Smart Villa */
         .house-container {
-            position: relative; width: 85%; max-width: 480px;
-            cursor: pointer; transition: transform 0.2s ease;
+            position: relative; z-index: 10;
+            width: 88%; max-width: 520px; cursor: pointer;
+            transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
+        .house-container:hover { transform: scale(1.02); }
         .house-container:active { transform: scale(0.97); }
 
-        svg { width: 100%; height: auto; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.25)); }
+        svg { width: 100%; height: auto; filter: drop-shadow(0 20px 35px rgba(0,0,0,0.6)); }
 
-        .window-pane { fill: #475569; transition: 0.4s ease; }
-        .house-body { fill: #f3f4f6; transition: 0.4s ease; }
-        .roof { fill: #334155; transition: 0.4s ease; }
-        .glow-effect { opacity: 0; transition: 0.4s ease; }
+        /* SVG Isometric House Styling */
+        .iso-wall-dark { fill: #1e293b; transition: fill 0.5s ease; }
+        .iso-wall-light { fill: #334155; transition: fill 0.5s ease; }
+        .iso-roof-left { fill: #0f172a; transition: fill 0.5s ease; }
+        .iso-roof-right { fill: #1e293b; transition: fill 0.5s ease; }
+        .iso-glass { fill: rgba(56, 189, 248, 0.15); stroke: rgba(56, 189, 248, 0.4); stroke-width: 1.5; transition: all 0.5s ease; }
+        
+        /* Light Turned OFF State */
+        .glow-layer { opacity: 0; transition: opacity 0.5s ease; }
+        .puppy-awake { opacity: 0; transition: opacity 0.3s ease; }
+        .puppy-sleep { opacity: 1; transition: opacity 0.3s ease; }
 
-        /* Default OFF State */
-        .sleeping-dog { display: block; }
-        .awake-dog { display: none; }
-        .sleep-z { animation: floatZ 2s infinite ease-in-out; }
-        @keyframes floatZ {
-            0% { transform: translateY(0px) scale(0.8); opacity: 0.3; }
-            50% { transform: translateY(-10px) scale(1.1); opacity: 1; }
-            100% { transform: translateY(-20px) scale(0.9); opacity: 0; }
+        /* Light Turned ON State */
+        body.light-active .iso-glass {
+            fill: rgba(250, 204, 21, 0.85);
+            stroke: #fef08a;
+            filter: drop-shadow(0 0 15px rgba(250, 204, 21, 0.8));
         }
-        .butterfly { opacity: 0; transition: opacity 0.3s ease; }
+        body.light-active .iso-wall-dark { fill: #334155; }
+        body.light-active .iso-wall-light { fill: #475569; }
+        body.light-active .glow-layer { opacity: 1; }
+        body.light-active .puppy-awake { opacity: 1; }
+        body.light-active .puppy-sleep { opacity: 0; }
 
-        /* Active ON State */
-        .house-on .window-pane { fill: #fde047; filter: drop-shadow(0 0 12px #facc15); }
-        .house-on .house-body { fill: #fffbeb; }
-        .house-on .roof { fill: #475569; }
-        .house-on .glow-effect { opacity: 1; }
-
-        .house-on .sleeping-dog { display: none; }
-        .house-on .awake-dog { display: block; }
-
-        .dog-tail { transform-origin: 355px 275px; animation: dogTailWag 0.35s infinite alternate ease-in-out; }
-        @keyframes dogTailWag { 0% { transform: rotate(-10deg); } 100% { transform: rotate(35deg); } }
-
-        .house-on .butterfly { opacity: 1; animation: flyButterfly 3.5s infinite ease-in-out; }
-        @keyframes flyButterfly {
-            0% { transform: translate(0px, 0px) scale(1) rotate(0deg); }
-            25% { transform: translate(25px, -25px) scale(1.1) rotate(15deg); }
-            50% { transform: translate(45px, -10px) scale(0.95) rotate(-10deg); }
-            75% { transform: translate(20px, 10px) scale(1.05) rotate(5deg); }
-            100% { transform: translate(0px, 0px) scale(1) rotate(0deg); }
-        }
-        .wing-left { transform-origin: 382px 200px; animation: flapLeft 0.18s infinite alternate ease-in-out; }
-        .wing-right { transform-origin: 394px 200px; animation: flapRight 0.18s infinite alternate ease-in-out; }
-        @keyframes flapLeft { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(65deg); } }
-        @keyframes flapRight { 0% { transform: rotateY(0deg); } 100% { transform: rotateY(-65deg); } }
-
-        .hint-text {
-            position: absolute; bottom: 20px;
-            color: white; font-weight: 700; font-size: 0.95rem;
-            background: rgba(0,0,0,0.4); padding: 10px 22px;
-            border-radius: 20px; backdrop-filter: blur(5px);
-            border: 1px solid rgba(255,255,255,0.2); text-align: center;
-        }
-
+        /* Bottom Controls */
         .voice-btn {
-            position: absolute; bottom: 75px;
-            background: #fde047; color: #1e293b; border: none;
-            padding: 8px 16px; border-radius: 15px; font-weight: 700;
-            font-size: 0.8rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            position: absolute; bottom: 80px; z-index: 100;
+            background: linear-gradient(135deg, #38bdf8 0%, #3b82f6 100%);
+            color: #ffffff; border: none; padding: 12px 28px;
+            border-radius: 30px; font-weight: 600; font-size: 0.85rem;
+            letter-spacing: 0.5px; cursor: pointer;
+            box-shadow: 0 8px 20px rgba(56, 189, 248, 0.35);
+            transition: all 0.2s ease;
+            display: flex; align-items: center; gap: 8px;
         }
+        .voice-btn:hover { transform: translateY(-2px); box-shadow: 0 12px 25px rgba(56, 189, 248, 0.5); }
         .voice-btn:active { transform: scale(0.95); }
 
+        .hint-text {
+            position: absolute; bottom: 25px; z-index: 100;
+            color: #cbd5e1; font-weight: 600; font-size: 0.88rem;
+            background: rgba(15, 23, 42, 0.65); padding: 10px 24px;
+            border-radius: 30px; backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        /* Mobile Layout Adjustment */
         @media (max-width: 600px) {
-            .side-card { top: auto; bottom: 110px; transform: none; padding: 8px 12px; }
+            .side-card { top: auto; bottom: 125px; transform: none; padding: 10px 14px; min-width: 120px; }
             .left-card { left: 15px; }
             .right-card { right: 15px; }
             .card-value { font-size: 0.85rem; }
-            .card-label { font-size: 0.65rem; }
+            .card-label { font-size: 0.6rem; }
+            .voice-btn { bottom: 75px; padding: 10px 22px; }
         }
     </style>
 </head>
 <body>
 
-    <!-- Top Header -->
+    <canvas id="bgCanvas"></canvas>
+    <div class="bg-glow"></div>
+
+    <!-- Top Status Header -->
     <div class="top-header">
-        <span class="main-title">Smart Home Control</span>
+        <span class="main-title">Smart Home HUD</span>
         <div id="status" class="status-text"><div class="dot dot-red"></div>Connecting...</div>
     </div>
 
     <!-- Left Card: Clock & Date -->
     <div class="side-card left-card">
-        <div class="card-label">📅 Date & Time</div>
-        <div class="card-value" id="dateDisplay">Loading...</div>
-        <div class="card-value" id="timeDisplay" style="font-size: 1.1rem; color: #ffffff;">--:--:--</div>
+        <div class="card-label">📅 System Time</div>
+        <div class="card-value" id="dateDisplay">-- --- ----</div>
+        <div class="card-value" id="timeDisplay" style="color: #ffffff; margin-top: 2px;">--:--:--</div>
     </div>
 
     <!-- Right Card: Temperature -->
     <div class="side-card right-card">
-        <div class="card-label">🌡️ Temperature</div>
+        <div class="card-label">🌡️ Environment</div>
         <div class="card-value" id="weatherDisplay">--°C</div>
     </div>
 
-    <!-- Center Interactive Cartoon House -->
+    <!-- Center Futuristic Isometric Smart Villa -->
     <div class="house-container" id="houseCard" onclick="toggleLight()">
-        <svg id="houseSvg" viewBox="0 0 490 350" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="0 0 500 400" xmlns="http://www.w3.org/2000/svg">
             <defs>
-                <linearGradient id="furGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#f59e0b"/>
-                    <stop offset="100%" stop-color="#d97706"/>
-                </linearGradient>
-                <linearGradient id="butterflyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                    <stop offset="0%" stop-color="#f43f5e"/>
-                    <stop offset="50%" stop-color="#ec4899"/>
-                    <stop offset="100%" stop-color="#8b5cf6"/>
-                </linearGradient>
-                <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="3" result="blur"/>
+                <filter id="yellowGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="12" result="blur" />
                     <feComposite in="SourceGraphic" in2="blur" operator="over"/>
                 </filter>
             </defs>
 
-            <circle class="glow-effect" cx="190" cy="180" r="140" fill="#fef08a" opacity="0.4" filter="blur(30px)"/>
+            <!-- Ground Base Grid -->
+            <polygon points="250,370 450,270 250,170 50,270" fill="#0f172a" stroke="#1e293b" stroke-width="2"/>
+            <polygon points="250,370 450,270 450,280 250,380" fill="#020617"/>
+            <polygon points="250,370 50,270 50,280 250,380" fill="#0f172a"/>
+
+            <!-- Main Building Structure -->
+            <!-- Left Side Wall -->
+            <polygon class="iso-wall-dark" points="120,230 250,295 250,160 120,95"/>
+            <!-- Right Side Wall -->
+            <polygon class="iso-wall-light" points="250,295 380,230 380,95 250,160"/>
             
-            <polygon class="roof" points="190,40 50,130 330,130"/>
-            <polygon class="roof" points="190,40 330,130 310,130 190,55" fill="#64748b" opacity="0.4"/>
-            <rect class="house-body" x="80" y="130" width="220" height="170" rx="6"/>
-            <rect x="165" y="210" width="50" height="90" rx="4" fill="#b45309"/>
-            <circle cx="205" cy="255" r="4" fill="#fbbf24"/>
-            <rect x="105" y="150" width="50" height="50" rx="6" fill="#1e293b"/>
-            <rect class="window-pane" x="113" y="158" width="16" height="16" rx="2"/>
-            <rect class="window-pane" x="131" y="158" width="16" height="16" rx="2"/>
-            <rect class="window-pane" x="113" y="176" width="16" height="16" rx="2"/>
-            <rect class="window-pane" x="131" y="176" width="16" height="16" rx="2"/>
-            <rect x="225" y="150" width="50" height="50" rx="6" fill="#1e293b"/>
-            <rect class="window-pane" x="233" y="158" width="16" height="16" rx="2"/>
-            <rect class="window-pane" x="251" y="158" width="16" height="16" rx="2"/>
-            <rect class="window-pane" x="233" y="176" width="16" height="16" rx="2"/>
-            <rect class="window-pane" x="251" y="176" width="16" height="16" rx="2"/>
-            <rect x="260" y="70" width="25" height="45" rx="3" fill="#94a3b8"/>
+            <!-- Roof -->
+            <polygon class="iso-roof-left" points="110,90 250,155 250,145 110,80"/>
+            <polygon class="iso-roof-right" points="250,155 390,85 390,75 250,145"/>
+            <polygon points="110,80 250,10 390,75 250,145" fill="#1e293b"/>
 
-            <!-- HD SLEEPING PUPPY -->
-            <g class="sleeping-dog">
-                <ellipse cx="362" cy="282" rx="26" ry="16" fill="url(#furGradient)"/>
-                <circle cx="336" cy="278" r="14" fill="url(#furGradient)"/>
-                <ellipse cx="327" cy="282" rx="7" ry="5" fill="#fde68a"/>
-                <path d="M 335 264 Q 322 270 330 280 Z" fill="#b45309"/>
-                <path d="M 332 274 Q 336 277 340 274" stroke="#451a03" stroke-width="2" stroke-linecap="round" fill="none"/>
-                <circle cx="323" cy="281" r="2" fill="#451a03"/>
-                <ellipse cx="352" cy="292" rx="5" ry="4" fill="#fbbf24"/>
-                <ellipse cx="365" cy="293" rx="5" ry="4" fill="#fbbf24"/>
-                <text x="325" y="246" fill="#ffffff" font-size="15" font-weight="bold" class="sleep-z" filter="url(#glow)">Z</text>
-                <text x="340" y="232" fill="#ffffff" font-size="12" font-weight="bold" class="sleep-z" style="animation-delay: 0.7s;" filter="url(#glow)">z</text>
+            <!-- Solar Panels / Tech Accent on Roof -->
+            <polygon points="160,75 250,35 300,58 210,98" fill="#0284c7" opacity="0.6"/>
+            <line x1="205" y1="55" x2="255" y2="78" stroke="#38bdf8" stroke-width="1"/>
+
+            <!-- Smart Glass Windows & Light Emitters -->
+            <!-- Ground Floor Windows (Left) -->
+            <polygon class="iso-glass" points="140,205 230,250 230,210 140,165"/>
+            <!-- Upper Floor Windows (Right) -->
+            <polygon class="iso-glass" points="270,235 360,190 360,145 270,190"/>
+            <!-- Front Entrance Glass Door -->
+            <polygon class="iso-glass" points="265,280 300,262 300,215 265,232"/>
+
+            <!-- Ambient Light Aura Emitter (Active when ON) -->
+            <g class="glow-layer">
+                <ellipse cx="250" cy="290" rx="120" ry="60" fill="#fef08a" opacity="0.3" filter="url(#yellowGlow)"/>
+                <polygon points="140,205 230,250 230,210 140,165" fill="#fde047" opacity="0.9" filter="url(#yellowGlow)"/>
+                <polygon points="270,235 360,190 360,145 270,190" fill="#fde047" opacity="0.9" filter="url(#yellowGlow)"/>
             </g>
 
-            <!-- HD AWAKE PUPPY -->
-            <g class="awake-dog">
-                <path class="dog-tail" d="M 350 282 Q 368 268 362 252" stroke="#d97706" stroke-width="7" stroke-linecap="round" fill="none"/>
-                <ellipse cx="345" cy="275" rx="18" ry="20" fill="url(#furGradient)"/>
-                <path d="M 333 260 Q 345 272 357 260 Z" fill="#ffffff"/>
-                <circle cx="345" cy="235" r="17" fill="url(#furGradient)"/>
-                <path d="M 330 225 Q 320 205 334 218 Z" fill="#b45309"/>
-                <path d="M 360 225 Q 370 205 356 218 Z" fill="#b45309"/>
-                <circle cx="338" cy="233" r="4" fill="#1e293b"/>
-                <circle cx="337" cy="231" r="1.5" fill="#ffffff"/>
-                <circle cx="352" cy="233" r="4" fill="#1e293b"/>
-                <circle cx="351" cy="231" r="1.5" fill="#ffffff"/>
-                <ellipse cx="345" cy="240" rx="4" ry="3" fill="#1e293b"/>
-                <path d="M 341 245 Q 345 251 349 245" stroke="#1e293b" stroke-width="2" stroke-linecap="round" fill="none"/>
-                <path d="M 343 247 Q 345 253 347 247 Z" fill="#f43f5e"/>
+            <!-- Hologram Status Light Badge above House -->
+            <g transform="translate(250, 45)">
+                <ellipse cx="0" cy="0" rx="40" ry="12" fill="rgba(15, 23, 42, 0.8)" stroke="#38bdf8" stroke-width="1.5"/>
+                <circle cx="-18" cy="0" r="4" fill="#10b981"/>
+                <text x="2" y="4" font-family="'Orbitron', sans-serif" font-size="10" fill="#ffffff" font-weight="bold">ONLINE</text>
             </g>
 
-            <!-- HD GLOWING BUTTERFLY -->
-            <g class="butterfly" filter="url(#glow)">
-                <g class="wing-left">
-                    <path d="M 386 205 Q 365 190 368 208 Q 365 220 386 215 Z" fill="url(#butterflyGrad)" opacity="0.9"/>
-                    <circle cx="375" cy="204" r="2.5" fill="#fde047"/>
-                </g>
-                <g class="wing-right">
-                    <path d="M 386 205 Q 407 190 404 208 Q 407 220 386 215 Z" fill="url(#butterflyGrad)" opacity="0.9"/>
-                    <circle cx="397" cy="204" r="2.5" fill="#fde047"/>
-                </g>
-                <ellipse cx="386" cy="207" rx="2" ry="9" fill="#1e293b"/>
-                <path d="M 386 198 Q 382 192 378 194" stroke="#1e293b" stroke-width="1.5" fill="none"/>
-                <path d="M 386 198 Q 390 192 394 194" stroke="#1e293b" stroke-width="1.5" fill="none"/>
+            <!-- Cyber Guard Puppy -->
+            <!-- Sleeping Puppy -->
+            <g class="puppy-sleep" transform="translate(390, 240)">
+                <ellipse cx="0" cy="0" rx="16" ry="10" fill="#cbd5e1"/>
+                <circle cx="-10" cy="-3" r="8" fill="#e2e8f0"/>
+                <path d="M -14 -3 Q -10 0 -6 -3" stroke="#475569" stroke-width="1.5" fill="none"/>
+                <text x="-8" y="-12" font-size="10" fill="#38bdf8" font-weight="bold">zZ</text>
+            </g>
+
+            <!-- Awake Cyber Puppy -->
+            <g class="puppy-awake" transform="translate(390, 235)">
+                <ellipse cx="0" cy="5" rx="16" ry="12" fill="#38bdf8"/>
+                <circle cx="-8" cy="-5" r="9" fill="#0284c7"/>
+                <circle cx="-11" cy="-6" r="2.5" fill="#fde047"/>
+                <path d="M 12 5 Q 22 -5 18 -15" stroke="#38bdf8" stroke-width="3" stroke-linecap="round" fill="none"/>
             </g>
         </svg>
     </div>
 
     <!-- Voice Control Button & Status -->
-    <button class="voice-btn" onclick="startListening()">🎤 Tap to Speak</button>
-    <div class="hint-text" id="hintText">Actual LED: Syncing...</div>
+    <button class="voice-btn" onclick="startListening()">
+        <span>🎤</span>
+        <span>VOICE COMMAND</span>
+    </button>
+    <div class="hint-text" id="hintText">System: Synchronizing...</div>
 
     <script>
+        // --- Dynamic Particle Canvas Background ---
+        const canvas = document.getElementById('bgCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random() * 0.5 + 0.2;
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            }
+            draw() {
+                ctx.fillStyle = `rgba(56, 189, 248, ${this.opacity})`;
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 45; i++) { particles.push(new Particle()); }
+
+        function animateBg() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animateBg);
+        }
+        animateBg();
+
         // --- Text-to-Speech Voice Report Function ---
         function speak(text) {
             if ('speechSynthesis' in window) {
@@ -256,17 +325,14 @@
                     let speechWord = event.results[0][0].transcript.toLowerCase().trim();
                     console.log("Heard speech: " + speechWord);
                     
-                    // Handle Light ON Command
                     if (speechWord.includes("light on") || speechWord.includes("turn on")) {
                         waitingForConfirmation = true;
                         sendMQTTCommand("ON");
                     } 
-                    // Handle Light OFF Command
                     else if (speechWord.includes("light off") || speechWord.includes("turn off")) {
                         waitingForConfirmation = true;
                         sendMQTTCommand("OFF");
                     } 
-                    // Handle Status Inquiry Questions ("is the light on?", "status", "light status")
                     else if (speechWord.includes("status") || speechWord.includes("is the light") || speechWord.includes("light condition")) {
                         if (lightState === "ON") {
                             speak("The light is currently turned on.");
@@ -335,12 +401,11 @@
         let hasSpokenInitialStatus = false;
 
         const statusEl = document.getElementById("status");
-        const houseCard = document.getElementById("houseCard");
         const hintText = document.getElementById("hintText");
 
         client.onConnectionLost = function(responseObject) {
             statusEl.innerHTML = '<div class="dot dot-red"></div>Disconnected';
-            hintText.innerText = "Actual LED: Disconnected 🔴";
+            hintText.innerText = "System: Offline 🔴";
             speak("System disconnected from cloud network.");
         };
 
@@ -348,7 +413,6 @@
             lightState = message.payloadString;
             updateUI();
 
-            // Initial open status report
             if (!hasSpokenInitialStatus) {
                 hasSpokenInitialStatus = true;
                 if (lightState === "ON") {
@@ -357,7 +421,6 @@
                     speak("System connected online. Light is currently turned off.");
                 }
             } 
-            // Voice command feedback based on actual hardware confirmation response
             else if (waitingForConfirmation) {
                 waitingForConfirmation = false;
                 if (lightState === "ON") {
@@ -375,14 +438,13 @@
                 statusEl.innerHTML = '<div class="dot dot-green"></div>Connected Online';
                 client.subscribe("samnang/smarthome/led/status");
 
-                // Request status sync immediately
                 let reqMsg = new Paho.MQTT.Message("GET");
                 reqMsg.destinationName = "samnang/smarthome/led/get";
                 client.send(reqMsg);
             },
             onFailure: function(err) {
                 statusEl.innerHTML = '<div class="dot dot-red"></div>Connection Failed';
-                hintText.innerText = "Actual LED: Offline ❌";
+                hintText.innerText = "System: Connection Error ❌";
                 speak("Connection failed. Please check network connection.");
             }
         });
@@ -401,11 +463,11 @@
 
         function updateUI() {
             if (lightState === "ON") {
-                houseCard.classList.add("house-on");
+                document.body.classList.add("light-active");
                 hintText.innerHTML = "Actual LED: <span style='color: #fde047;'>TURNED ON 💡</span> (Tap to turn OFF)";
             } else {
-                houseCard.classList.remove("house-on");
-                hintText.innerHTML = "Actual LED: <span style='color: #94a3b8;'>TURNED OFF 🌙</span> (Tap to turn ON)";
+                document.body.classList.remove("light-active");
+                hintText.innerHTML = "Actual LED: <span style='color: #38bdf8;'>TURNED OFF 🌙</span> (Tap to turn ON)";
             }
         }
     </script>
