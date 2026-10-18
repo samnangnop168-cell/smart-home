@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="km">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>ប្រព័ន្ធបញ្ជាផ្ទះឆ្លាតវៃ</title> 
+    <title>Smart Home Dashboard with Voice</title> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -56,6 +56,7 @@
         .roof { fill: #334155; transition: 0.4s ease; }
         .glow-effect { opacity: 0; transition: 0.4s ease; }
 
+        /* Default OFF State */
         .sleeping-dog { display: block; }
         .awake-dog { display: none; }
         .sleep-z { animation: floatZ 2s infinite ease-in-out; }
@@ -66,6 +67,7 @@
         }
         .butterfly { opacity: 0; transition: opacity 0.3s ease; }
 
+        /* Active ON State */
         .house-on .window-pane { fill: #fde047; filter: drop-shadow(0 0 12px #facc15); }
         .house-on .house-body { fill: #fffbeb; }
         .house-on .roof { fill: #475569; }
@@ -98,7 +100,7 @@
             position: absolute; bottom: 75px;
             background: #fde047; color: #1e293b; border: none;
             padding: 8px 16px; border-radius: 15px; font-weight: 700;
-            font-size: 0.85rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            font-size: 0.8rem; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);
         }
         .voice-btn:active { transform: scale(0.95); }
 
@@ -113,22 +115,26 @@
 </head>
 <body>
 
+    <!-- Top Header -->
     <div class="top-header">
-        <span class="main-title">បញ្ជាផ្ទះឆ្លាតវៃ</span>
-        <div id="status" class="status-text"><div class="dot dot-red"></div>កំពុងតភ្ជាប់...</div>
+        <span class="main-title">Smart Home Control</span>
+        <div id="status" class="status-text"><div class="dot dot-red"></div>Connecting...</div>
     </div>
 
+    <!-- Left Card: Clock & Date -->
     <div class="side-card left-card">
-        <div class="card-label">📅 កាលបរិច្ឆេទ និងម៉ោង</div>
+        <div class="card-label">📅 Date & Time</div>
         <div class="card-value" id="dateDisplay">Loading...</div>
         <div class="card-value" id="timeDisplay" style="font-size: 1.1rem; color: #ffffff;">--:--:--</div>
     </div>
 
+    <!-- Right Card: Temperature -->
     <div class="side-card right-card">
-        <div class="card-label">🌡️ សីតុណ្ហភាព</div>
+        <div class="card-label">🌡️ Temperature</div>
         <div class="card-value" id="weatherDisplay">--°C</div>
     </div>
 
+    <!-- Center Interactive Cartoon House -->
     <div class="house-container" id="houseCard" onclick="toggleLight()">
         <svg id="houseSvg" viewBox="0 0 490 350" xmlns="http://www.w3.org/2000/svg">
             <circle class="glow-effect" cx="190" cy="180" r="140" fill="#fef08a" opacity="0.4" filter="blur(30px)"/>
@@ -150,6 +156,7 @@
             <rect class="window-pane" x="251" y="176" width="16" height="16" rx="2"/>
             <rect x="260" y="70" width="25" height="45" rx="3" fill="#94a3b8"/>
 
+            <!-- SLEEPING PUPPY -->
             <g class="sleeping-dog">
                 <ellipse cx="365" cy="280" rx="24" ry="16" fill="#ffffff"/>
                 <ellipse cx="372" cy="275" rx="14" ry="10" fill="#b45309"/>
@@ -161,6 +168,7 @@
                 <text x="342" y="238" fill="#ffffff" font-size="12" font-weight="bold" class="sleep-z" style="animation-delay: 0.7s;">z</text>
             </g>
 
+            <!-- AWAKE PUPPY -->
             <g class="awake-dog">
                 <path class="dog-tail" d="M 360 275 Q 375 260 370 245" stroke="#78350f" stroke-width="6" stroke-linecap="round" fill="none"/>
                 <ellipse cx="345" cy="270" rx="16" ry="22" fill="#ffffff"/>
@@ -178,6 +186,7 @@
                 <path d="M 341 240 Q 345 246 349 240" fill="#f43f5e"/>
             </g>
 
+            <!-- BUTTERFLY -->
             <g class="butterfly">
                 <ellipse cx="380" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(-30 380 205)"/>
                 <ellipse cx="392" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(30 392 205)"/>
@@ -189,43 +198,25 @@
         </svg>
     </div>
 
-    <button class="voice-btn" onclick="startListening()">🎤 និយាយបញ្ជា (Voice)</button>
-    <div class="hint-text" id="hintText">ស្ថានភាព: កំពុងពិនិត្យ...</div>
+    <!-- Voice Control Button & Status -->
+    <button class="voice-btn" onclick="startListening()">🎤 Tap to Speak</button>
+    <div class="hint-text" id="hintText">Actual LED: Syncing...</div>
 
     <script>
-        // --- Web Audio Beep Feedback System (Requires ZERO phone settings) ---
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-
-        function playSound(type) {
-            try {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
-
-                if (type === "ON") {
-                    osc.frequency.setValueAtTime(587.33, audioCtx.currentTime); // D5 Tone
-                    osc.frequency.setValueAtTime(880, audioCtx.currentTime + 0.1); // A5 Tone
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.25);
-                } else if (type === "OFF") {
-                    osc.frequency.setValueAtTime(440, audioCtx.currentTime); // A4 Tone
-                    osc.frequency.setValueAtTime(293.66, audioCtx.currentTime + 0.1); // D4 Tone
-                    gain.gain.setValueAtTime(0.3, audioCtx.currentTime);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.25);
-                } else if (type === "LISTEN") {
-                    osc.frequency.setValueAtTime(659.25, audioCtx.currentTime); // E5 Tone
-                    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-                    osc.start();
-                    osc.stop(audioCtx.currentTime + 0.12);
-                }
-            } catch(e) {}
+        // --- Text-to-Speech Voice Report Function ---
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                let utterance = new SpeechSynthesisUtterance(text);
+                utterance.rate = 1.0;
+                utterance.pitch = 1.0;
+                window.speechSynthesis.speak(utterance);
+            }
         }
 
-        // --- Speech Recognition (Supports both Khmer & English) ---
+        // --- Speech Recognition (Voice Commands & Questions) ---
         let recognition;
+        let waitingForConfirmation = false;
 
         function initVoiceRecognition() {
             window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -233,70 +224,121 @@
                 recognition = new SpeechRecognition();
                 recognition.continuous = false;
                 recognition.interimResults = false;
-                recognition.lang = 'km-KH';
+                recognition.lang = 'en-US';
 
                 recognition.onresult = function(event) {
                     let speechWord = event.results[0][0].transcript.toLowerCase().trim();
-                    console.log("Heard: " + speechWord);
+                    console.log("Heard speech: " + speechWord);
                     
-                    if (speechWord.includes("បើក") || speechWord.includes("on") || speechWord.includes("turn on") || speechWord.includes("light on")) {
+                    // Handle Light ON Command
+                    if (speechWord.includes("light on") || speechWord.includes("turn on")) {
+                        waitingForConfirmation = true;
                         sendMQTTCommand("ON");
-                    } else if (speechWord.includes("បិទ") || speechWord.includes("off") || speechWord.includes("turn off") || speechWord.includes("light off")) {
+                    } 
+                    // Handle Light OFF Command
+                    else if (speechWord.includes("light off") || speechWord.includes("turn off")) {
+                        waitingForConfirmation = true;
                         sendMQTTCommand("OFF");
+                    } 
+                    // Handle Status Inquiry Questions ("is the light on?", "status", "light status")
+                    else if (speechWord.includes("status") || speechWord.includes("is the light") || speechWord.includes("light condition")) {
+                        if (lightState === "ON") {
+                            speak("The light is currently turned on.");
+                        } else if (lightState === "OFF") {
+                            speak("The light is currently turned off.");
+                        } else {
+                            speak("Status is currently unknown.");
+                        }
+                    } 
+                    else {
+                        speak("Command not recognized. Say light on, light off, or check status.");
                     }
+                };
+
+                recognition.onerror = function(event) {
+                    console.log("Speech recognition error", event.error);
                 };
             }
         }
 
         function startListening() {
-            if (audioCtx.state === 'suspended') { audioCtx.resume(); }
-            playSound("LISTEN");
             if (recognition) {
-                try { recognition.start(); } catch(e) {}
+                try {
+                    recognition.start();
+                    speak("Listening");
+                } catch(e) { console.log(e); }
             } else {
-                alert("សូមប្រើប្រាស់ Google Chrome សម្រាប់ការបញ្ជាដោយសំឡេង។");
+                alert("Speech recognition is not supported in this browser. Try Google Chrome.");
             }
         }
 
         initVoiceRecognition();
 
-        // --- Date & Time ---
+        // --- Live Clock & Date Script ---
         function updateDateTime() {
             const now = new Date();
-            document.getElementById("dateDisplay").innerText = now.toLocaleDateString('km-KH', { month: 'short', day: 'numeric', year: 'numeric' });
-            document.getElementById("timeDisplay").innerText = now.toLocaleTimeString('km-KH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById("dateDisplay").innerText = dateStr;
+            document.getElementById("timeDisplay").innerText = timeStr;
         }
         setInterval(updateDateTime, 1000);
         updateDateTime();
 
-        // --- Live Weather ---
+        // --- Live Weather Fetcher ---
         async function fetchWeather() {
             try {
                 navigator.geolocation.getCurrentPosition(async (position) => {
-                    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${position.coords.latitude}&longitude=${position.coords.longitude}&current_weather=true`);
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`);
                     const data = await res.json();
                     document.getElementById("weatherDisplay").innerText = `${data.current_weather.temperature}°C`;
-                }, () => { document.getElementById("weatherDisplay").innerText = "28°C"; });
-            } catch (e) { document.getElementById("weatherDisplay").innerText = "28°C"; }
+                }, () => {
+                    document.getElementById("weatherDisplay").innerText = "28°C";
+                });
+            } catch (e) {
+                document.getElementById("weatherDisplay").innerText = "28°C";
+            }
         }
         fetchWeather();
 
-        // --- MQTT System Sync ---
+        // --- MQTT Cloud Connection ---
         const client = new Paho.MQTT.Client("broker.emqx.io", 8084, "/mqtt", "web_cartoon_" + parseInt(Math.random() * 100000));
         let lightState = "UNKNOWN";
+        let hasSpokenInitialStatus = false;
 
-        client.onConnectionLost = function() {
-            document.getElementById("status").innerHTML = '<div class="dot dot-red"></div>បានផ្តាច់ការតភ្ជាប់';
-            document.getElementById("hintText").innerText = "ស្ថានភាព: គ្មានអ៊ីនធឺណិត 🔴";
+        const statusEl = document.getElementById("status");
+        const houseCard = document.getElementById("houseCard");
+        const hintText = document.getElementById("hintText");
+
+        client.onConnectionLost = function(responseObject) {
+            statusEl.innerHTML = '<div class="dot dot-red"></div>Disconnected';
+            hintText.innerText = "Actual LED: Disconnected 🔴";
+            speak("System disconnected from cloud network.");
         };
 
         client.onMessageArrived = function(message) {
-            let lastState = lightState;
             lightState = message.payloadString;
             updateUI();
 
-            if (lastState !== "UNKNOWN" && lastState !== lightState) {
-                playSound(lightState);
+            // Initial open status report
+            if (!hasSpokenInitialStatus) {
+                hasSpokenInitialStatus = true;
+                if (lightState === "ON") {
+                    speak("System connected online. Light is currently turned on.");
+                } else {
+                    speak("System connected online. Light is currently turned off.");
+                }
+            } 
+            // Voice command feedback based on actual hardware confirmation response
+            else if (waitingForConfirmation) {
+                waitingForConfirmation = false;
+                if (lightState === "ON") {
+                    speak("Confirmed. Light is now turned on.");
+                } else {
+                    speak("Confirmed. Light is now turned off.");
+                }
             }
         };
 
@@ -304,21 +346,24 @@
             useSSL: true,
             timeout: 5,
             onSuccess: function() {
-                document.getElementById("status").innerHTML = '<div class="dot dot-green"></div>បានតភ្ជាប់អនឡាញ';
+                statusEl.innerHTML = '<div class="dot dot-green"></div>Connected Online';
                 client.subscribe("samnang/smarthome/led/status");
 
+                // Request status sync immediately
                 let reqMsg = new Paho.MQTT.Message("GET");
                 reqMsg.destinationName = "samnang/smarthome/led/get";
                 client.send(reqMsg);
             },
-            onFailure: function() {
-                document.getElementById("status").innerHTML = '<div class="dot dot-red"></div>ការតភ្ជាប់បរាជ័យ';
-                document.getElementById("hintText").innerText = "ស្ថានភាព: ភ្ជាប់មិនបាន ❌";
+            onFailure: function(err) {
+                statusEl.innerHTML = '<div class="dot dot-red"></div>Connection Failed';
+                hintText.innerText = "Actual LED: Offline ❌";
+                speak("Connection failed. Please check network connection.");
             }
         });
 
         function toggleLight() {
             let nextState = (lightState === "ON") ? "OFF" : "ON";
+            waitingForConfirmation = true;
             sendMQTTCommand(nextState);
         }
 
@@ -330,11 +375,11 @@
 
         function updateUI() {
             if (lightState === "ON") {
-                document.getElementById("houseCard").classList.add("house-on");
-                document.getElementById("hintText").innerHTML = "ស្ថានភាពភ្លើង: <span style='color: #fde047;'>កំពុងបើក 💡 (TURNED ON)</span>";
+                houseCard.classList.add("house-on");
+                hintText.innerHTML = "Actual LED: <span style='color: #fde047;'>TURNED ON 💡</span> (Tap to turn OFF)";
             } else {
-                document.getElementById("houseCard").classList.remove("house-on");
-                document.getElementById("hintText").innerHTML = "ស្ថានភាពភ្លើង: <span style='color: #94a3b8;'>កំពុងបិទ 🌙 (TURNED OFF)</span>";
+                houseCard.classList.remove("house-on");
+                hintText.innerHTML = "Actual LED: <span style='color: #94a3b8;'>TURNED OFF 🌙</span> (Tap to turn ON)";
             }
         }
     </script>
