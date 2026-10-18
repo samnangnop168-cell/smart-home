@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Smart Home Dashboard with Voice</title> 
+    <title>Smart Home Dashboard - Khmer Voice</title> 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -199,22 +199,23 @@
     </div>
 
     <!-- Voice Control Button & Status -->
-    <button class="voice-btn" onclick="startListening()">🎤 Tap to Speak</button>
+    <button class="voice-btn" onclick="startListening()">🎤 និយាយ (Speak)</button>
     <div class="hint-text" id="hintText">Actual LED: Syncing...</div>
 
     <script>
-        // --- Text-to-Speech Voice Report Function ---
+        // --- Khmer Text-to-Speech Function ---
         function speak(text) {
             if ('speechSynthesis' in window) {
                 window.speechSynthesis.cancel();
                 let utterance = new SpeechSynthesisUtterance(text);
-                utterance.rate = 1.0;
+                utterance.lang = 'km-KH'; // Set to Khmer language
+                utterance.rate = 0.9;
                 utterance.pitch = 1.0;
                 window.speechSynthesis.speak(utterance);
             }
         }
 
-        // --- Speech Recognition (Voice Commands & Questions) ---
+        // --- Khmer Speech Recognition ---
         let recognition;
         let waitingForConfirmation = false;
 
@@ -224,34 +225,32 @@
                 recognition = new SpeechRecognition();
                 recognition.continuous = false;
                 recognition.interimResults = false;
-                recognition.lang = 'en-US';
+                recognition.lang = 'km-KH'; // Set speech recognition language to Khmer
 
                 recognition.onresult = function(event) {
-                    let speechWord = event.results[0][0].transcript.toLowerCase().trim();
+                    let speechWord = event.results[0][0].transcript.trim();
                     console.log("Heard speech: " + speechWord);
                     
-                    // Handle Light ON Command
-                    if (speechWord.includes("light on") || speechWord.includes("turn on")) {
+                    // Support both Khmer script and English words for reliability
+                    if (speechWord.includes("បើកភ្លើង") || speechWord.includes("light on") || speechWord.includes("turn on")) {
                         waitingForConfirmation = true;
                         sendMQTTCommand("ON");
                     } 
-                    // Handle Light OFF Command
-                    else if (speechWord.includes("light off") || speechWord.includes("turn off")) {
+                    else if (speechWord.includes("បิดភ្លើង") || speechWord.includes("ពន្លត់ភ្លើង") || speechWord.includes("light off") || speechWord.includes("turn off")) {
                         waitingForConfirmation = true;
                         sendMQTTCommand("OFF");
                     } 
-                    // Handle Status Inquiry Questions ("is the light on?", "status", "light status")
-                    else if (speechWord.includes("status") || speechWord.includes("is the light") || speechWord.includes("light condition")) {
+                    else if (speechWord.includes("ស្ថានភាព") || speechWord.includes("status") || speechWord.includes("condition")) {
                         if (lightState === "ON") {
-                            speak("The light is currently turned on.");
+                            speak("អំពូលកំពុងបើក។");
                         } else if (lightState === "OFF") {
-                            speak("The light is currently turned off.");
+                            speak("អំពូលកំពុងបិទ។");
                         } else {
-                            speak("Status is currently unknown.");
+                            speak("មិនស្គាល់ស្ថានភាព។");
                         }
                     } 
                     else {
-                        speak("Command not recognized. Say light on, light off, or check status.");
+                        speak("សូមនិយាយថា បើកភ្លើង ឬ បិទភ្លើង។");
                     }
                 };
 
@@ -265,10 +264,10 @@
             if (recognition) {
                 try {
                     recognition.start();
-                    speak("Listening");
+                    speak("កំពុងស្តាប់...");
                 } catch(e) { console.log(e); }
             } else {
-                alert("Speech recognition is not supported in this browser. Try Google Chrome.");
+                alert("ブラウザが音声認識をサポートしていません。 Google Chromeをご利用ください。");
             }
         }
 
@@ -277,8 +276,8 @@
         // --- Live Clock & Date Script ---
         function updateDateTime() {
             const now = new Date();
-            const dateStr = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-            const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            const dateStr = now.toLocaleDateString('km-KH', { month: 'short', day: 'numeric', year: 'numeric' });
+            const timeStr = now.toLocaleTimeString('km-KH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
             document.getElementById("dateDisplay").innerText = dateStr;
             document.getElementById("timeDisplay").innerText = timeStr;
         }
@@ -315,29 +314,29 @@
         client.onConnectionLost = function(responseObject) {
             statusEl.innerHTML = '<div class="dot dot-red"></div>Disconnected';
             hintText.innerText = "Actual LED: Disconnected 🔴";
-            speak("System disconnected from cloud network.");
+            speak("ប្រព័ន្ធបានផ្តាច់ការតភ្ជាប់។");
         };
 
         client.onMessageArrived = function(message) {
             lightState = message.payloadString;
             updateUI();
 
-            // Initial open status report
+            // Initial open status report in Khmer
             if (!hasSpokenInitialStatus) {
                 hasSpokenInitialStatus = true;
                 if (lightState === "ON") {
-                    speak("System connected online. Light is currently turned on.");
+                    speak("ប្រព័ន្ធបានតភ្ជាប់។ ឥឡូវនេះអំពូលកំពុងបើក។");
                 } else {
-                    speak("System connected online. Light is currently turned off.");
+                    speak("ប្រព័ន្ធបានតភ្ជាប់។ ឥឡូវនេះអំពូលកំពុងបិទ។");
                 }
             } 
-            // Voice command feedback based on actual hardware confirmation response
+            // Voice command feedback in Khmer
             else if (waitingForConfirmation) {
                 waitingForConfirmation = false;
                 if (lightState === "ON") {
-                    speak("Confirmed. Light is now turned on.");
+                    speak("បានបញ្ជាក់។ ឥឡូវនេះអំពូលបើកហើយ។");
                 } else {
-                    speak("Confirmed. Light is now turned off.");
+                    speak("បានបញ្ជាក់។ ឥឡូវនេះអំពូលបិទហើយ។");
                 }
             }
         };
@@ -357,7 +356,7 @@
             onFailure: function(err) {
                 statusEl.innerHTML = '<div class="dot dot-red"></div>Connection Failed';
                 hintText.innerText = "Actual LED: Offline ❌";
-                speak("Connection failed. Please check network connection.");
+                speak("ការតភ្ជាប់បរាជ័យ។");
             }
         });
 
