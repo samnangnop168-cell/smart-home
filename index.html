@@ -126,10 +126,6 @@
             50% { transform: translateY(-12px) scale(1.15); opacity: 1; }
             100% { transform: translateY(-24px) scale(0.9); opacity: 0; }
         }
-        
-        /* Cute Wagging Tail */
-        .cute-tail { transform-origin: 395px 235px; animation: cuteTailWag 0.3s infinite alternate ease-in-out; }
-        @keyframes cuteTailWag { 0% { transform: rotate(-15deg); } 100% { transform: rotate(30deg); } }
 
         @keyframes flyButterfly {
             0% { transform: translate(0px, 0px) scale(1) rotate(0deg); }
@@ -266,41 +262,30 @@
                 <text x="2" y="4" font-family="'Orbitron', sans-serif" font-size="10" fill="#ffffff" font-weight="bold">ONLINE</text>
             </g>
 
-            <!-- NEW CUTE SLEEPING PUPPY -->
+            <!-- CLEAN SLEEPING PUPPY -->
             <g class="puppy-sleep" transform="translate(365, 225)">
                 <ellipse cx="15" cy="18" rx="20" ry="12" fill="url(#dogFur)"/>
                 <circle cx="-4" cy="12" r="14" fill="url(#dogFur)"/>
                 <ellipse cx="-12" cy="16" rx="6" ry="4" fill="#fef3c7"/>
                 <ellipse cx="-12" cy="12" rx="3" ry="2" fill="#451a03"/>
-                <!-- Floppy Ear -->
                 <path d="M -5 2 Q -16 8 -10 18 Z" fill="#b45309"/>
-                <!-- Closed Eye Curve -->
                 <path d="M -6 8 Q -3 11 0 8" stroke="#451a03" stroke-width="2" stroke-linecap="round" fill="none"/>
-                <!-- Floating Zzz Animation -->
                 <text x="-8" y="-12" fill="#ffffff" font-size="13" font-weight="bold" class="sleep-z" filter="url(#glow)">Z</text>
                 <text x="6" y="-24" fill="#ffffff" font-size="11" font-weight="bold" class="sleep-z" style="animation-delay: 0.7s;" filter="url(#glow)">z</text>
             </g>
 
-            <!-- NEW CUTE AWAKE PUPPY -->
+            <!-- CLEAN AWAKE PUPPY -->
             <g class="puppy-awake" transform="translate(365, 205)">
-                <!-- Wagging Tail -->
-                <path class="cute-tail" d="M 28 25 Q 40 10 36 -5" stroke="#d97706" stroke-width="6" stroke-linecap="round" fill="none"/>
-                <!-- Sitting Body -->
                 <ellipse cx="14" cy="22" rx="16" ry="18" fill="url(#dogFur)"/>
                 <ellipse cx="14" cy="22" rx="9" ry="12" fill="#ffffff"/>
-                <!-- Big Round Head -->
                 <circle cx="14" cy="-3" r="18" fill="url(#dogFur)"/>
-                <!-- Big Soft Floppy Ears -->
                 <path d="M -3 -12 C -18 -4 -12 15 -2 5 Z" fill="#b45309"/>
                 <path d="M 31 -12 C 46 -4 40 15 30 5 Z" fill="#b45309"/>
-                <!-- White Muzzle -->
                 <ellipse cx="14" cy="2" rx="8" ry="6" fill="#ffffff"/>
-                <!-- Big Shiny Anime Eyes -->
                 <circle cx="6" cy="-6" r="4.5" fill="#1e293b"/>
                 <circle cx="4.5" cy="-8" r="1.8" fill="#ffffff"/>
                 <circle cx="22" cy="-6" r="4.5" fill="#1e293b"/>
                 <circle cx="20.5" cy="-8" r="1.8" fill="#ffffff"/>
-                <!-- Cute Nose & Tongue -->
                 <ellipse cx="14" cy="0" rx="3.5" ry="2.2" fill="#451a03"/>
                 <path d="M 10 4 Q 14 9 18 4" stroke="#451a03" stroke-width="1.8" stroke-linecap="round" fill="none"/>
                 <path d="M 12 5 Q 14 11 16 5 Z" fill="#f43f5e"/>
