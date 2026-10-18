@@ -62,8 +62,8 @@
         .sleep-z { animation: floatZ 2s infinite ease-in-out; }
         @keyframes floatZ {
             0% { transform: translateY(0px) scale(0.8); opacity: 0.3; }
-            50% { transform: translateY(-12px) scale(1.15); opacity: 1; }
-            100% { transform: translateY(-24px) scale(0.9); opacity: 0; }
+            50% { transform: translateY(-10px) scale(1.1); opacity: 1; }
+            100% { transform: translateY(-20px) scale(0.9); opacity: 0; }
         }
         .butterfly { opacity: 0; transition: opacity 0.3s ease; }
 
@@ -79,13 +79,12 @@
         .dog-tail { transform-origin: 355px 275px; animation: dogTailWag 0.35s infinite alternate ease-in-out; }
         @keyframes dogTailWag { 0% { transform: rotate(-10deg); } 100% { transform: rotate(35deg); } }
 
-        /* High-Definition Glowing Butterfly Animation */
-        .house-on .butterfly { opacity: 1; animation: flyButterfly 4s infinite ease-in-out; }
+        .house-on .butterfly { opacity: 1; animation: flyButterfly 3.5s infinite ease-in-out; }
         @keyframes flyButterfly {
             0% { transform: translate(0px, 0px) scale(1) rotate(0deg); }
-            25% { transform: translate(30px, -30px) scale(1.1) rotate(15deg); }
-            50% { transform: translate(50px, -10px) scale(0.95) rotate(-10deg); }
-            75% { transform: translate(20px, 15px) scale(1.05) rotate(5deg); }
+            25% { transform: translate(25px, -25px) scale(1.1) rotate(15deg); }
+            50% { transform: translate(45px, -10px) scale(0.95) rotate(-10deg); }
+            75% { transform: translate(20px, 10px) scale(1.05) rotate(5deg); }
             100% { transform: translate(0px, 0px) scale(1) rotate(0deg); }
         }
         .wing-left { transform-origin: 382px 200px; animation: flapLeft 0.18s infinite alternate ease-in-out; }
@@ -139,7 +138,7 @@
         <div class="card-value" id="weatherDisplay">--°C</div>
     </div>
 
-    <!-- Center Interactive House with Upgraded HD Pets -->
+    <!-- Center Interactive Cartoon House -->
     <div class="house-container" id="houseCard" onclick="toggleLight()">
         <svg id="houseSvg" viewBox="0 0 490 350" xmlns="http://www.w3.org/2000/svg">
             <defs>
@@ -177,64 +176,47 @@
             <rect class="window-pane" x="251" y="176" width="16" height="16" rx="2"/>
             <rect x="260" y="70" width="25" height="45" rx="3" fill="#94a3b8"/>
 
-            <!-- UPGRADED HD SLEEPING PUPPY -->
+            <!-- HD SLEEPING PUPPY -->
             <g class="sleeping-dog">
-                <!-- Body Curl -->
                 <ellipse cx="362" cy="282" rx="26" ry="16" fill="url(#furGradient)"/>
-                <!-- Head & Snout -->
                 <circle cx="336" cy="278" r="14" fill="url(#furGradient)"/>
                 <ellipse cx="327" cy="282" rx="7" ry="5" fill="#fde68a"/>
-                <!-- Floppy Ear -->
                 <path d="M 335 264 Q 322 270 330 280 Z" fill="#b45309"/>
-                <!-- Closed Eye Curve -->
                 <path d="M 332 274 Q 336 277 340 274" stroke="#451a03" stroke-width="2" stroke-linecap="round" fill="none"/>
                 <circle cx="323" cy="281" r="2" fill="#451a03"/>
-                <!-- Cute Paws tucked in -->
                 <ellipse cx="352" cy="292" rx="5" ry="4" fill="#fbbf24"/>
                 <ellipse cx="365" cy="293" rx="5" ry="4" fill="#fbbf24"/>
-                <!-- Floating Zzz Animation -->
                 <text x="325" y="246" fill="#ffffff" font-size="15" font-weight="bold" class="sleep-z" filter="url(#glow)">Z</text>
                 <text x="340" y="232" fill="#ffffff" font-size="12" font-weight="bold" class="sleep-z" style="animation-delay: 0.7s;" filter="url(#glow)">z</text>
             </g>
 
-            <!-- UPGRADED HD AWAKE PUPPY -->
+            <!-- HD AWAKE PUPPY -->
             <g class="awake-dog">
-                <!-- Wagging Tail -->
                 <path class="dog-tail" d="M 350 282 Q 368 268 362 252" stroke="#d97706" stroke-width="7" stroke-linecap="round" fill="none"/>
-                <!-- Sitting Body -->
                 <ellipse cx="345" cy="275" rx="18" ry="20" fill="url(#furGradient)"/>
-                <!-- Chest Fluff -->
                 <path d="M 333 260 Q 345 272 357 260 Z" fill="#ffffff"/>
-                <!-- Head -->
                 <circle cx="345" cy="235" r="17" fill="url(#furGradient)"/>
-                <!-- Pointy Ears -->
                 <path d="M 330 225 Q 320 205 334 218 Z" fill="#b45309"/>
                 <path d="M 360 225 Q 370 205 356 218 Z" fill="#b45309"/>
-                <!-- Big Shiny Eyes -->
                 <circle cx="338" cy="233" r="4" fill="#1e293b"/>
                 <circle cx="337" cy="231" r="1.5" fill="#ffffff"/>
                 <circle cx="352" cy="233" r="4" fill="#1e293b"/>
                 <circle cx="351" cy="231" r="1.5" fill="#ffffff"/>
-                <!-- Snout & Nose -->
                 <ellipse cx="345" cy="240" rx="4" ry="3" fill="#1e293b"/>
                 <path d="M 341 245 Q 345 251 349 245" stroke="#1e293b" stroke-width="2" stroke-linecap="round" fill="none"/>
-                <!-- Happy Tongue -->
                 <path d="M 343 247 Q 345 253 347 247 Z" fill="#f43f5e"/>
             </g>
 
-            <!-- UPGRADED HD GLOWING BUTTERFLY -->
+            <!-- HD GLOWING BUTTERFLY -->
             <g class="butterfly" filter="url(#glow)">
-                <!-- Left Wing -->
                 <g class="wing-left">
                     <path d="M 386 205 Q 365 190 368 208 Q 365 220 386 215 Z" fill="url(#butterflyGrad)" opacity="0.9"/>
                     <circle cx="375" cy="204" r="2.5" fill="#fde047"/>
                 </g>
-                <!-- Right Wing -->
                 <g class="wing-right">
                     <path d="M 386 205 Q 407 190 404 208 Q 407 220 386 215 Z" fill="url(#butterflyGrad)" opacity="0.9"/>
                     <circle cx="397" cy="204" r="2.5" fill="#fde047"/>
                 </g>
-                <!-- Body & Antennae -->
                 <ellipse cx="386" cy="207" rx="2" ry="9" fill="#1e293b"/>
                 <path d="M 386 198 Q 382 192 378 194" stroke="#1e293b" stroke-width="1.5" fill="none"/>
                 <path d="M 386 198 Q 390 192 394 194" stroke="#1e293b" stroke-width="1.5" fill="none"/>
@@ -274,14 +256,17 @@
                     let speechWord = event.results[0][0].transcript.toLowerCase().trim();
                     console.log("Heard speech: " + speechWord);
                     
+                    // Handle Light ON Command
                     if (speechWord.includes("light on") || speechWord.includes("turn on")) {
                         waitingForConfirmation = true;
                         sendMQTTCommand("ON");
                     } 
+                    // Handle Light OFF Command
                     else if (speechWord.includes("light off") || speechWord.includes("turn off")) {
                         waitingForConfirmation = true;
                         sendMQTTCommand("OFF");
                     } 
+                    // Handle Status Inquiry Questions ("is the light on?", "status", "light status")
                     else if (speechWord.includes("status") || speechWord.includes("is the light") || speechWord.includes("light condition")) {
                         if (lightState === "ON") {
                             speak("The light is currently turned on.");
@@ -363,6 +348,7 @@
             lightState = message.payloadString;
             updateUI();
 
+            // Initial open status report
             if (!hasSpokenInitialStatus) {
                 hasSpokenInitialStatus = true;
                 if (lightState === "ON") {
@@ -371,6 +357,7 @@
                     speak("System connected online. Light is currently turned off.");
                 }
             } 
+            // Voice command feedback based on actual hardware confirmation response
             else if (waitingForConfirmation) {
                 waitingForConfirmation = false;
                 if (lightState === "ON") {
@@ -388,6 +375,7 @@
                 statusEl.innerHTML = '<div class="dot dot-green"></div>Connected Online';
                 client.subscribe("samnang/smarthome/led/status");
 
+                // Request status sync immediately
                 let reqMsg = new Paho.MQTT.Message("GET");
                 reqMsg.destinationName = "samnang/smarthome/led/get";
                 client.send(reqMsg);
