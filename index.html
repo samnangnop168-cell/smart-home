@@ -8,21 +8,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
         body {
-            margin: 0;
-            padding: 0;
-            width: 100vw;
-            height: 100vh;
+            margin: 0; padding: 0;
+            width: 100vw; height: 100vh;
             font-family: 'Poppins', sans-serif;
             background: linear-gradient(135deg, #1b8fb0 0%, #30acc9 70%, #6cd2ea 100%);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-            touch-action: manipulation;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            overflow: hidden; touch-action: manipulation;
         }
 
-        /* Top Title & Cloud Status */
         .top-header {
             position: absolute; top: 15px;
             display: flex; flex-direction: column; align-items: center;
@@ -36,18 +30,11 @@
         .dot-green { background-color: #34d399; box-shadow: 0 0 6px #34d399; }
         .dot-red { background-color: #ef4444; }
 
-        /* Left and Right Side Cards */
         .side-card {
-            position: absolute;
-            top: 50%; transform: translateY(-50%);
-            background: rgba(0, 0, 0, 0.35);
-            padding: 12px 16px;
-            border-radius: 14px;
-            backdrop-filter: blur(6px);
-            color: white;
-            border: 1px solid rgba(255,255,255,0.2);
-            text-align: center;
-            z-index: 90;
+            position: absolute; top: 50%; transform: translateY(-50%);
+            background: rgba(0, 0, 0, 0.35); padding: 12px 16px;
+            border-radius: 14px; backdrop-filter: blur(6px); color: white;
+            border: 1px solid rgba(255,255,255,0.2); text-align: center; z-index: 90;
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
         }
         .left-card { left: 20px; }
@@ -56,29 +43,20 @@
         .card-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; opacity: 0.8; }
         .card-value { font-size: 1rem; font-weight: 700; margin-top: 4px; color: #fde047; }
 
-        /* Cartoon House Container (Center) */
         .house-container {
-            position: relative;
-            width: 85%;
-            max-width: 480px;
-            cursor: pointer;
-            transition: transform 0.2s ease;
+            position: relative; width: 85%; max-width: 480px;
+            cursor: pointer; transition: transform 0.2s ease;
         }
         .house-container:active { transform: scale(0.97); }
 
-        /* SVG Cartoon House Animation */
-        svg {
-            width: 100%;
-            height: auto;
-            filter: drop-shadow(0 15px 25px rgba(0,0,0,0.25));
-        }
+        svg { width: 100%; height: auto; filter: drop-shadow(0 15px 25px rgba(0,0,0,0.25)); }
 
         .window-pane { fill: #475569; transition: 0.4s ease; }
         .house-body { fill: #f3f4f6; transition: 0.4s ease; }
         .roof { fill: #334155; transition: 0.4s ease; }
         .glow-effect { opacity: 0; transition: 0.4s ease; }
 
-        /* --- Default State: House OFF (Dog Sleeps, Butterfly Hidden) --- */
+        /* Default OFF State */
         .sleeping-dog { display: block; }
         .awake-dog { display: none; }
         .sleep-z { animation: floatZ 2s infinite ease-in-out; }
@@ -89,7 +67,7 @@
         }
         .butterfly { opacity: 0; transition: opacity 0.3s ease; }
 
-        /* --- Active State: House ON (Dog Wakes Up & Plays with Butterfly) --- */
+        /* Active ON State */
         .house-on .window-pane { fill: #fde047; filter: drop-shadow(0 0 12px #facc15); }
         .house-on .house-body { fill: #fffbeb; }
         .house-on .roof { fill: #475569; }
@@ -98,21 +76,10 @@
         .house-on .sleeping-dog { display: none; }
         .house-on .awake-dog { display: block; }
 
-        /* Dog tail wagging */
-        .dog-tail {
-            transform-origin: 360px 270px;
-            animation: dogTailWag 0.4s infinite alternate ease-in-out;
-        }
-        @keyframes dogTailWag {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(30deg); }
-        }
+        .dog-tail { transform-origin: 360px 270px; animation: dogTailWag 0.4s infinite alternate ease-in-out; }
+        @keyframes dogTailWag { 0% { transform: rotate(0deg); } 100% { transform: rotate(30deg); } }
 
-        /* Butterfly flying and fluttering around the dog */
-        .house-on .butterfly {
-            opacity: 1;
-            animation: flyButterfly 3.5s infinite ease-in-out;
-        }
+        .house-on .butterfly { opacity: 1; animation: flyButterfly 3.5s infinite ease-in-out; }
         @keyframes flyButterfly {
             0% { transform: translate(0px, 0px) scale(1); }
             25% { transform: translate(25px, -25px) scale(1.1); }
@@ -121,12 +88,12 @@
             100% { transform: translate(0px, 0px) scale(1); }
         }
 
-        /* Hint Text at Bottom */
         .hint-text {
             position: absolute; bottom: 20px;
-            color: white; font-weight: 600; font-size: 0.9rem;
-            background: rgba(0,0,0,0.3); padding: 8px 18px;
-            border-radius: 20px; backdrop-filter: blur(4px);
+            color: white; font-weight: 700; font-size: 0.95rem;
+            background: rgba(0,0,0,0.4); padding: 10px 22px;
+            border-radius: 20px; backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.2);
         }
 
         @media (max-width: 600px) {
@@ -164,7 +131,6 @@
         <svg id="houseSvg" viewBox="0 0 490 350" xmlns="http://www.w3.org/2000/svg">
             <circle class="glow-effect" cx="190" cy="180" r="140" fill="#fef08a" opacity="0.4" filter="blur(30px)"/>
             
-            <!-- House Structure -->
             <polygon class="roof" points="190,40 50,130 330,130"/>
             <polygon class="roof" points="190,40 330,130 310,130 190,55" fill="#64748b" opacity="0.4"/>
             <rect class="house-body" x="80" y="130" width="220" height="170" rx="6"/>
@@ -182,52 +148,37 @@
             <rect class="window-pane" x="251" y="176" width="16" height="16" rx="2"/>
             <rect x="260" y="70" width="25" height="45" rx="3" fill="#94a3b8"/>
 
-            <!-- ================= SLEEPING TRICOLOR PUPPY (Shifted Further Right) ================= -->
+            <!-- SLEEPING PUPPY -->
             <g class="sleeping-dog">
-                <!-- White & Brown Curled Body -->
                 <ellipse cx="365" cy="280" rx="24" ry="16" fill="#ffffff"/>
-                <ellipse cx="372" cy="275" rx="14" ry="10" fill="#b45309"/> <!-- Dark brown back patch -->
-                <!-- Head resting -->
+                <ellipse cx="372" cy="275" rx="14" ry="10" fill="#b45309"/>
                 <circle cx="342" cy="275" r="13" fill="#ffffff"/>
-                <circle cx="338" cy="271" r="9" fill="#d97706"/> <!-- Brown eye patch -->
-                <!-- Floppy Brown Ear -->
+                <circle cx="338" cy="271" r="9" fill="#d97706"/>
                 <ellipse cx="335" cy="282" rx="5" ry="9" fill="#92400e" transform="rotate(30 335 282)"/>
-                <!-- Closed Eyes (Sleeping) -->
                 <path d="M 338 273 Q 342 277 346 273" stroke="#451a03" stroke-width="1.5" fill="none"/>
-                <!-- Sleeping Z's -->
                 <text x="330" y="250" fill="#ffffff" font-size="14" font-weight="bold" class="sleep-z">Z</text>
                 <text x="342" y="238" fill="#ffffff" font-size="12" font-weight="bold" class="sleep-z" style="animation-delay: 0.7s;">z</text>
             </g>
 
-            <!-- ================= AWAKE TRICOLOR PUPPY (Shifted Further Right) ================= -->
+            <!-- AWAKE PUPPY -->
             <g class="awake-dog">
-                <!-- Tail Wagging -->
                 <path class="dog-tail" d="M 360 275 Q 375 260 370 245" stroke="#78350f" stroke-width="6" stroke-linecap="round" fill="none"/>
-                <!-- White Chest/Body with Dark Saddle Patch -->
                 <ellipse cx="345" cy="270" rx="16" ry="22" fill="#ffffff"/>
                 <path d="M 342 252 Q 362 265 355 285 Q 345 280 342 252" fill="#78350f"/>
-                
-                <!-- Head with Brown Patches -->
                 <circle cx="345" cy="232" r="16" fill="#ffffff"/>
                 <path d="M 329 230 Q 335 218 340 220 Q 338 238 329 230" fill="#b45309"/>
                 <path d="M 361 230 Q 355 218 350 220 Q 352 238 361 230" fill="#b45309"/>
-                
-                <!-- Floppy Brown Ears -->
                 <ellipse cx="326" cy="235" rx="7" ry="13" fill="#92400e" transform="rotate(-20 326 235)"/>
                 <ellipse cx="364" cy="235" rx="7" ry="13" fill="#92400e" transform="rotate(20 364 235)"/>
-                
-                <!-- Eyes -->
                 <circle cx="338" cy="230" r="3.5" fill="#451a03"/>
                 <circle cx="337" cy="229" r="1.2" fill="#fff"/>
                 <circle cx="352" cy="230" r="3.5" fill="#451a03"/>
                 <circle cx="351" cy="229" r="1.2" fill="#fff"/>
-                
-                <!-- Nose & Mouth -->
                 <ellipse cx="345" cy="236" rx="3.5" ry="2.2" fill="#1e293b"/>
                 <path d="M 341 240 Q 345 246 349 240" fill="#f43f5e"/>
             </g>
 
-            <!-- ================= BUTTERFLY (Shifted with Dog) ================= -->
+            <!-- BUTTERFLY -->
             <g class="butterfly">
                 <ellipse cx="380" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(-30 380 205)"/>
                 <ellipse cx="392" cy="205" rx="7" ry="4" fill="#ec4899" transform="rotate(30 392 205)"/>
@@ -239,7 +190,8 @@
         </svg>
     </div>
 
-    <div class="hint-text" id="hintText">Tap house to TURN ON 💡</div>
+    <!-- Status text display -->
+    <div class="hint-text" id="hintText">Actual LED: Syncing...</div>
 
     <script>
         // --- Live Clock & Date Script ---
@@ -273,7 +225,7 @@
 
         // --- MQTT Cloud Connection ---
         const client = new Paho.MQTT.Client("broker.emqx.io", 8084, "/mqtt", "web_cartoon_" + parseInt(Math.random() * 100000));
-        let lightState = "OFF";
+        let lightState = "UNKNOWN";
 
         const statusEl = document.getElementById("status");
         const houseCard = document.getElementById("houseCard");
@@ -281,6 +233,7 @@
 
         client.onConnectionLost = function(responseObject) {
             statusEl.innerHTML = '<div class="dot dot-red"></div>Disconnected';
+            hintText.innerText = "Actual LED: Disconnected 🔴";
         };
 
         client.onMessageArrived = function(message) {
@@ -294,14 +247,20 @@
             onSuccess: function() {
                 statusEl.innerHTML = '<div class="dot dot-green"></div>Connected Online';
                 client.subscribe("samnang/smarthome/led/status");
+                
+                // ASK ESP32 FOR REAL STATUS IMMEDIATELY WHEN WEBPAGE OPENS!
+                let reqMsg = new Paho.MQTT.Message("GET");
+                reqMsg.destinationName = "samnang/smarthome/led/get";
+                client.send(reqMsg);
             },
             onFailure: function(err) {
                 statusEl.innerHTML = '<div class="dot dot-red"></div>Connection Failed';
+                hintText.innerText = "Actual LED: Offline ❌";
             }
         });
 
         function toggleLight() {
-            let nextState = (lightState === "OFF") ? "ON" : "OFF";
+            let nextState = (lightState === "ON") ? "OFF" : "ON";
             let msg = new Paho.MQTT.Message(nextState);
             msg.destinationName = "samnang/smarthome/led";
             client.send(msg);
@@ -310,10 +269,10 @@
         function updateUI() {
             if (lightState === "ON") {
                 houseCard.classList.add("house-on");
-                hintText.innerText = "House is ON ✨ (Tap to turn OFF)";
+                hintText.innerHTML = "Actual LED: <span style='color: #fde047;'>TURNED ON 💡</span> (Tap to turn OFF)";
             } else {
                 houseCard.classList.remove("house-on");
-                hintText.innerText = "House is OFF 🌙 (Tap to turn ON)";
+                hintText.innerHTML = "Actual LED: <span style='color: #94a3b8;'>TURNED OFF 🌙</span> (Tap to turn ON)";
             }
         }
     </script>
