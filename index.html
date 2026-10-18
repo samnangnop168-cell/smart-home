@@ -206,7 +206,7 @@
         // --- Text-to-Speech Voice Report Function ---
         function speak(text) {
             if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel(); // Stop any ongoing speech
+                window.speechSynthesis.cancel();
                 let utterance = new SpeechSynthesisUtterance(text);
                 utterance.rate = 1.0;
                 utterance.pitch = 1.0;
@@ -216,6 +216,8 @@
 
         // --- Speech Recognition (Voice Commands) ---
         let recognition;
+        let waitingForConfirmation = false;
+
         function initVoiceRecognition() {
             window.SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
             if (window.SpeechRecognition) {
@@ -229,11 +231,11 @@
                     console.log("Heard speech: " + speechWord);
                     
                     if (speechWord.includes("light on") || speechWord.includes("turn on")) {
+                        waitingForConfirmation = true;
                         sendMQTTCommand("ON");
-                        speak("Turning light on");
                     } else if (speechWord.includes("light off") || speechWord.includes("turn off")) {
+                        waitingForConfirmation = true;
                         sendMQTTCommand("OFF");
-                        speak("Turning light off");
                     } else {
                         speak("Command not recognized. Say light on or light off.");
                     }
@@ -290,7 +292,7 @@
         // --- MQTT Cloud Connection ---
         const client = new Paho.MQTT.Client("broker.emqx.io", 8084, "/mqtt", "web_cartoon_" + parseInt(Math.random() * 100000));
         let lightState = "UNKNOWN";
-        let hasSpokenInitialStatus = false; // Flag to ensure initial voice report triggers once
+        let hasSpokenInitialStatus = false;
 
         const statusEl = document.getElementById("status");
         const houseCard = document.getElementById("houseCard");
@@ -303,16 +305,26 @@
         };
 
         client.onMessageArrived = function(message) {
+            let previousState = lightState;
             lightState = message.payloadString;
             updateUI();
 
-            // Speak condition on initial load/sync response
+            // Initial open status check
             if (!hasSpokenInitialStatus) {
                 hasSpokenInitialStatus = true;
                 if (lightState === "ON") {
                     speak("System connected online. Light is currently turned on.");
                 } else {
                     speak("System connected online. Light is currently turned off.");
+                }
+            } 
+            // Voice command feedback based on actual hardware confirmation response
+            else if (waitingForConfirmation) {
+                waitingForConfirmation = false;
+                if (lightState === "ON") {
+                    speak("Confirmed. Light is now turned on.");
+                } else {
+                    speak("Confirmed. Light is now turned off.");
                 }
             }
         };
@@ -324,7 +336,7 @@
                 statusEl.innerHTML = '<div class="dot dot-green"></div>Connected Online';
                 client.subscribe("samnang/smarthome/led/status");
 
-                // Ask ESP32 for current physical state immediately
+                // Request status sync immediately
                 let reqMsg = new Paho.MQTT.Message("GET");
                 reqMsg.destinationName = "samnang/smarthome/led/get";
                 client.send(reqMsg);
@@ -338,6 +350,7 @@
 
         function toggleLight() {
             let nextState = (lightState === "ON") ? "OFF" : "ON";
+            waitingForConfirmation = true;
             sendMQTTCommand(nextState);
         }
 
