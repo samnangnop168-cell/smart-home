@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Architectural Smart Villa HUD</title>
+    <title>Interactive Smart Villa Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/paho-mqtt/1.0.1/mqttws31.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg-dark: #080c14;
-            --panel-bg: rgba(15, 23, 42, 0.8);
+            --panel-bg: rgba(15, 23, 42, 0.85);
             --border-glow: rgba(56, 189, 248, 0.25);
             --accent-cyan: #38bdf8;
             --accent-amber: #f59e0b;
@@ -28,25 +28,25 @@
             overflow-x: hidden;
         }
 
-        /* Top Bar */
+        /* Top Header */
         header {
             display: flex; justify-content: space-between; align-items: center;
             padding: 16px 32px; background: var(--panel-bg);
             border-bottom: 1px solid var(--border-glow); backdrop-filter: blur(12px);
         }
         .title { font-family: 'Orbitron', sans-serif; font-size: 1.1rem; color: var(--accent-cyan); letter-spacing: 1.5px; }
-        .meta-info { display: flex; gap: 24px; font-size: 0.85rem; color: var(--text-sub); }
-        .status-badge { display: flex; align-items: center; gap: 8px; font-weight: 600; color: #10b981; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 10px #10b981; }
+        .meta-info { display: flex; gap: 24px; font-size: 0.85rem; color: var(--text-sub); align-items: center; }
+        .status-badge { display: flex; align-items: center; gap: 8px; font-weight: 600; color: var(--accent-green); }
+        .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green); box-shadow: 0 0 10px var(--accent-green); }
 
-        /* Main Grid */
+        /* Main Dashboard Grid */
         .dashboard-grid {
-            display: grid; grid-template-columns: 300px 1fr 340px;
-            gap: 24px; padding: 24px; flex: 1;
+            display: grid; grid-template-columns: 280px 1fr 340px;
+            gap: 20px; padding: 20px; flex: 1;
         }
         @media (max-width: 1100px) { .dashboard-grid { grid-template-columns: 1fr; } }
 
-        /* Card Container */
+        /* Glassmorphism Cards */
         .card {
             background: var(--panel-bg); border: 1px solid var(--border-glow);
             border-radius: 20px; padding: 20px; backdrop-filter: blur(12px);
@@ -55,19 +55,38 @@
         .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
         .card-title { font-size: 0.85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--text-sub); }
 
-        /* Villa Map Stage */
+        /* Room Filter Tabs */
+        .filter-bar {
+            display: flex; gap: 8px; overflow-x: auto; padding-bottom: 12px; margin-bottom: 12px;
+        }
+        .filter-btn {
+            background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+            color: var(--text-sub); padding: 6px 14px; border-radius: 20px; font-size: 0.8rem;
+            font-weight: 600; cursor: pointer; white-space: nowrap; transition: all 0.2s ease;
+        }
+        .filter-btn:hover, .filter-btn.active {
+            background: rgba(56, 189, 248, 0.2); border-color: var(--accent-cyan); color: var(--text-main);
+        }
+        .add-room-btn {
+            background: linear-gradient(135deg, #10b981, #059669); border: none;
+            color: white; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem;
+            font-weight: 600; cursor: pointer; transition: all 0.2s ease;
+        }
+        .add-room-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
+
+        /* Villa Map Viewport */
         .villa-stage {
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            position: relative; flex: 1; min-height: 420px;
+            position: relative; flex: 1; min-height: 400px;
         }
         .villa-stage svg { width: 100%; max-width: 580px; height: auto; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.7)); }
 
-        /* Room Interaction Overlays */
         .room-zone { cursor: pointer; transition: all 0.3s ease; }
-        .room-zone:hover { opacity: 0.85; filter: drop-shadow(0 0 12px var(--accent-cyan)); }
+        .room-zone:hover { filter: drop-shadow(0 0 12px var(--accent-cyan)); }
+        .room-zone.dimmed { opacity: 0.25; }
 
         /* Device Switches */
-        .device-list { display: flex; flex-direction: column; gap: 14px; }
+        .device-list { display: flex; flex-direction: column; gap: 12px; max-height: 420px; overflow-y: auto; }
         .device-card {
             display: flex; align-items: center; justify-content: space-between;
             padding: 14px 18px; border-radius: 14px; background: rgba(255, 255, 255, 0.03);
@@ -79,7 +98,7 @@
         .device-title { font-weight: 600; font-size: 0.9rem; }
         .device-sub { font-size: 0.75rem; color: var(--text-sub); margin-top: 2px; }
 
-        /* Modern Toggle */
+        /* Toggle Switch */
         .switch { position: relative; display: inline-block; width: 46px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider {
@@ -94,15 +113,15 @@
         input:checked + .slider:before { transform: translateX(20px); }
 
         /* Scenes */
-        .scene-grid { grid-template-columns: 1fr 1fr; display: grid; gap: 12px; }
+        .scene-grid { grid-template-columns: 1fr 1fr; display: grid; gap: 10px; }
         .btn-scene {
-            padding: 14px; border-radius: 14px; background: rgba(255,255,255,0.04);
+            padding: 12px; border-radius: 12px; background: rgba(255,255,255,0.04);
             border: 1px solid rgba(255,255,255,0.08); color: var(--text-main); font-weight: 600;
-            font-size: 0.85rem; cursor: pointer; text-align: center; transition: all 0.2s ease;
+            font-size: 0.82rem; cursor: pointer; text-align: center; transition: all 0.2s ease;
         }
         .btn-scene:hover { background: rgba(56, 189, 248, 0.15); border-color: var(--accent-cyan); }
 
-        /* Voice Bar */
+        /* Bottom Voice Bar */
         .voice-bar {
             grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center;
             background: var(--panel-bg); padding: 14px 28px; border-radius: 18px;
@@ -113,6 +132,27 @@
             padding: 10px 22px; border-radius: 30px; font-weight: 600; cursor: pointer;
             box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3); display: flex; align-items: center; gap: 8px;
         }
+
+        /* Modal Popup */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(8px); z-index: 1000;
+            display: none; justify-content: center; align-items: center;
+        }
+        .modal {
+            background: #0f172a; border: 1px solid var(--border-glow); border-radius: 20px;
+            padding: 24px; width: 90%; max-width: 400px; box-shadow: 0 20px 40px rgba(0,0,0,0.8);
+        }
+        .modal-header { font-size: 1.1rem; font-weight: 700; color: var(--accent-cyan); margin-bottom: 16px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 0.8rem; color: var(--text-sub); margin-bottom: 6px; }
+        .form-group input, .form-group select {
+            width: 100%; padding: 10px 14px; background: rgba(255,255,255,0.05);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 10px; color: white; outline: none;
+        }
+        .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+        .btn-cancel { background: rgba(255,255,255,0.1); border: none; color: white; padding: 8px 16px; border-radius: 10px; cursor: pointer; }
+        .btn-save { background: var(--accent-cyan); border: none; color: #0f172a; font-weight: 700; padding: 8px 16px; border-radius: 10px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -128,7 +168,7 @@
     </header>
 
     <div class="dashboard-grid">
-        <!-- Left Column: Scenes & Environment -->
+        <!-- Left Column: Quick Scenes & Telemetry -->
         <div class="card">
             <div class="card-header"><span class="card-title">Quick Routines</span></div>
             <div class="scene-grid">
@@ -155,9 +195,21 @@
             </div>
         </div>
 
-        <!-- Center Column: Luxury Architectural Villa Blueprint -->
+        <!-- Center Column: Villa Map with Filter Options -->
         <div class="card villa-stage">
-            <div class="card-header" style="width: 100%;"><span class="card-title">Architectural Villa Interactive Overview</span></div>
+            <div class="card-header" style="width: 100%;">
+                <span class="card-title">Architectural Villa Map</span>
+                <button class="add-room-btn" onclick="openAddModal()">➕ Add Room</button>
+            </div>
+
+            <!-- Room Filter Tabs -->
+            <div class="filter-bar" id="filterBar">
+                <button class="filter-btn active" onclick="filterRoom('ALL')">All Rooms</button>
+                <button class="filter-btn" onclick="filterRoom('LIVING')">Living Room</button>
+                <button class="filter-btn" onclick="filterRoom('BEDROOM')">Bedroom</button>
+                <button class="filter-btn" onclick="filterRoom('GARAGE')">Garage</button>
+            </div>
+
             <svg viewBox="0 0 600 420" xmlns="http://www.w3.org/2000/svg">
                 <defs>
                     <linearGradient id="poolGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -170,44 +222,40 @@
                     </filter>
                 </defs>
 
-                <!-- Base Property Ground & Pool -->
+                <!-- Ground Base -->
                 <polygon points="300,400 560,260 300,120 40,260" fill="#0f172a" stroke="#1e293b" stroke-width="2"/>
-                <!-- Swimming Pool -->
                 <polygon points="120,260 200,220 250,245 170,285" fill="url(#poolGrad)" stroke="#38bdf8" stroke-width="1.5"/>
 
-                <!-- Main Villa Walls (Multi-Structure) -->
-                <!-- Garage Wall (Left Block) -->
+                <!-- Base House Structure -->
                 <polygon points="180,210 250,175 250,110 180,145" fill="#1e293b"/>
                 <polygon points="250,175 290,155 290,90 250,110" fill="#334155"/>
-                
-                <!-- Main Living Room Wall (Center Block) -->
                 <polygon points="250,245 380,180 380,95 250,160" fill="#1e293b"/>
                 <polygon points="380,180 470,135 470,50 380,95" fill="#334155"/>
-
-                <!-- Roof Structures -->
-                <polygon points="170,145 250,105 300,130 220,170" fill="#0f172a" stroke="#334155"/>
                 <polygon points="240,160 380,90 480,130 340,200" fill="#1e293b" stroke="#475569"/>
 
-                <!-- Interactive Room Glass Windows / Nodes -->
-                <!-- 1. Living Room (Main Glass Front) -->
-                <g class="room-zone" onclick="toggleDevice('samnang/smarthome/led')">
+                <!-- Interactive Rooms -->
+                <!-- 1. Living Room -->
+                <g class="room-zone" id="zone-LIVING" onclick="toggleDevice('samnang/smarthome/led')">
                     <polygon id="glow-living" points="270,225 360,180 360,135 270,180" fill="rgba(56, 189, 248, 0.2)" stroke="#38bdf8" stroke-width="2"/>
                     <text x="315" y="185" fill="#ffffff" font-size="10" font-weight="bold" text-anchor="middle">LIVING ROOM</text>
                 </g>
 
-                <!-- 2. Master Bedroom (Upper Level Window) -->
-                <g class="room-zone" onclick="toggleDevice('samnang/smarthome/bedroom')">
+                <!-- 2. Master Bedroom -->
+                <g class="room-zone" id="zone-BEDROOM" onclick="toggleDevice('samnang/smarthome/bedroom')">
                     <polygon id="glow-bedroom" points="395,165 455,135 455,100 395,130" fill="rgba(56, 189, 248, 0.2)" stroke="#38bdf8" stroke-width="2"/>
                     <text x="425" y="135" fill="#ffffff" font-size="9" font-weight="bold" text-anchor="middle">BEDROOM</text>
                 </g>
 
-                <!-- 3. Cyber Garage (Left Shutter) -->
-                <g class="room-zone" onclick="toggleDevice('samnang/smarthome/garage')">
+                <!-- 3. Garage -->
+                <g class="room-zone" id="zone-GARAGE" onclick="toggleDevice('samnang/smarthome/garage')">
                     <polygon id="glow-garage" points="195,200 240,178 240,145 195,167" fill="rgba(56, 189, 248, 0.2)" stroke="#38bdf8" stroke-width="1.5"/>
                     <text x="218" y="175" fill="#ffffff" font-size="8" font-weight="bold" text-anchor="middle">GARAGE</text>
                 </g>
 
-                <!-- Status Badge Marker -->
+                <!-- Dynamic Custom Rooms Group -->
+                <g id="dynamic-rooms-group"></g>
+
+                <!-- Status Badge -->
                 <g transform="translate(300, 50)">
                     <rect x="-50" y="-12" width="100" height="24" rx="12" fill="rgba(15, 23, 42, 0.85)" stroke="#38bdf8" stroke-width="1"/>
                     <circle cx="-32" cy="0" r="4" fill="#10b981"/>
@@ -216,12 +264,12 @@
             </svg>
         </div>
 
-        <!-- Right Column: Device Controls -->
+        <!-- Right Column: Connected Device Controls -->
         <div class="card">
             <div class="card-header"><span class="card-title">Connected Devices</span></div>
-            <div class="device-list">
-                <!-- Living Room -->
-                <div class="device-card">
+            <div class="device-list" id="deviceListContainer">
+                <!-- Default Living Room -->
+                <div class="device-card" data-room="LIVING">
                     <div class="device-info">
                         <span class="device-icon">🛋️</span>
                         <div>
@@ -235,8 +283,8 @@
                     </label>
                 </div>
 
-                <!-- Master Bedroom -->
-                <div class="device-card">
+                <!-- Default Master Bedroom -->
+                <div class="device-card" data-room="BEDROOM">
                     <div class="device-info">
                         <span class="device-icon">🛏️</span>
                         <div>
@@ -250,8 +298,8 @@
                     </label>
                 </div>
 
-                <!-- Garage Gate -->
-                <div class="device-card">
+                <!-- Default Garage -->
+                <div class="device-card" data-room="GARAGE">
                     <div class="device-info">
                         <span class="device-icon">🚗</span>
                         <div>
@@ -267,7 +315,7 @@
             </div>
         </div>
 
-        <!-- Voice Bar -->
+        <!-- Voice Control Bar -->
         <div class="voice-bar">
             <div style="font-size: 0.88rem; color: var(--text-sub);" id="voiceHint">
                 Voice Assistant: Tap microphone and say "Turn on living room" or "All lights off".
@@ -275,6 +323,35 @@
             <button class="voice-btn" onclick="startListening()">
                 <span>🎤</span> Voice Command
             </button>
+        </div>
+    </div>
+
+    <!-- Modal Dialog for Adding Rooms -->
+    <div class="modal-overlay" id="addRoomModal">
+        <div class="modal">
+            <div class="modal-header">➕ Add New Room / Device</div>
+            <div class="form-group">
+                <label>Room Name</label>
+                <input type="text" id="inputRoomName" placeholder="e.g. Kitchen, Garden, Patio">
+            </div>
+            <div class="form-group">
+                <label>Device Icon</label>
+                <select id="inputRoomIcon">
+                    <option value="🍳">🍳 Kitchen</option>
+                    <option value="🌴">🌴 Garden / Outdoor</option>
+                    <option value="🍿">🍿 Cinema Room</option>
+                    <option value="🏊">🏊 Swimming Pool</option>
+                    <option value="💡">💡 General Light</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>MQTT Topic</label>
+                <input type="text" id="inputMqttTopic" placeholder="e.g. samnang/smarthome/kitchen">
+            </div>
+            <div class="modal-actions">
+                <button class="btn-cancel" onclick="closeAddModal()">Cancel</button>
+                <button class="btn-save" onclick="saveNewRoom()">Add Room</button>
+            </div>
         </div>
     </div>
 
@@ -287,7 +364,7 @@
         }
         setInterval(updateClock, 1000); updateClock();
 
-        // Device States
+        // Device Configurations
         const deviceStates = {
             'samnang/smarthome/led': { toggleId: 'toggle-living', statusId: 'status-living', glowId: 'glow-living' },
             'samnang/smarthome/bedroom': { toggleId: 'toggle-bedroom', statusId: 'status-bedroom', glowId: 'glow-bedroom' },
@@ -315,8 +392,10 @@
             if (deviceStates[topic]) {
                 const conf = deviceStates[topic];
                 const isOn = payload === "ON";
-                document.getElementById(conf.toggleId).checked = isOn;
-                document.getElementById(conf.statusId).innerText = "Status: " + payload;
+                const toggleEl = document.getElementById(conf.toggleId);
+                const statusEl = document.getElementById(conf.statusId);
+                if (toggleEl) toggleEl.checked = isOn;
+                if (statusEl) statusEl.innerText = "Status: " + payload;
                 
                 const glowEl = document.getElementById(conf.glowId);
                 if (glowEl) {
@@ -327,11 +406,92 @@
         };
 
         function toggleDevice(topic, stateVal) {
-            const currentCheck = document.getElementById(deviceStates[topic].toggleId).checked;
+            if (!deviceStates[topic]) return;
+            const toggleEl = document.getElementById(deviceStates[topic].toggleId);
+            const currentCheck = toggleEl ? toggleEl.checked : false;
             const newState = (stateVal !== undefined) ? stateVal : !currentCheck;
             let msg = new Paho.MQTT.Message(newState ? "ON" : "OFF");
             msg.destinationName = topic;
             client.send(msg);
+        }
+
+        // Room Filter Functionality
+        function filterRoom(roomKey) {
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+
+            const allZones = document.querySelectorAll('.room-zone');
+            allZones.forEach(zone => {
+                if (roomKey === 'ALL' || zone.id === 'zone-' + roomKey) {
+                    zone.classList.remove('dimmed');
+                } else {
+                    zone.classList.add('dimmed');
+                }
+            });
+
+            const allCards = document.querySelectorAll('.device-card');
+            allCards.forEach(card => {
+                if (roomKey === 'ALL' || card.getAttribute('data-room') === roomKey) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
+        // Modal Handlers
+        function openAddModal() { document.getElementById('addRoomModal').style.display = 'flex'; }
+        function closeAddModal() { document.getElementById('addRoomModal').style.display = 'none'; }
+
+        // Dynamic Room Addition
+        function saveNewRoom() {
+            const name = document.getElementById('inputRoomName').value.trim();
+            const icon = document.getElementById('inputRoomIcon').value;
+            let topic = document.getElementById('inputMqttTopic').value.trim();
+
+            if (!name) { alert("Please enter a room name."); return; }
+            if (!topic) { topic = "samnang/smarthome/" + name.toLowerCase().replace(/\s+/g, ''); }
+
+            const key = name.toUpperCase().replace(/\s+/g, '');
+            const toggleId = 'toggle-' + key.toLowerCase();
+            const statusId = 'status-' + key.toLowerCase();
+            const glowId = 'glow-' + key.toLowerCase();
+
+            // 1. Add Filter Tab
+            const filterBar = document.getElementById('filterBar');
+            const newFilterBtn = document.createElement('button');
+            newFilterBtn.className = 'filter-btn';
+            newFilterBtn.innerText = name;
+            newFilterBtn.onclick = (e) => filterRoom(key);
+            filterBar.appendChild(newFilterBtn);
+
+            // 2. Add Control Card
+            const deviceList = document.getElementById('deviceListContainer');
+            const newCard = document.createElement('div');
+            newCard.className = 'device-card';
+            newCard.setAttribute('data-room', key);
+            newCard.innerHTML = `
+                <div class="device-info">
+                    <span class="device-icon">${icon}</span>
+                    <div>
+                        <div class="device-title">${name}</div>
+                        <div class="device-sub" id="${statusId}">Status: OFF</div>
+                    </div>
+                </div>
+                <label class="switch">
+                    <input type="checkbox" id="${toggleId}" onchange="toggleDevice('${topic}', this.checked)">
+                    <span class="slider"></span>
+                </label>
+            `;
+            deviceList.appendChild(newCard);
+
+            // 3. Register Topic
+            deviceStates[topic] = { toggleId, statusId, glowId };
+            client.subscribe(topic + "/status");
+
+            closeAddModal();
+            document.getElementById('inputRoomName').value = '';
+            document.getElementById('inputMqttTopic').value = '';
         }
 
         function applyScene(scene) {
